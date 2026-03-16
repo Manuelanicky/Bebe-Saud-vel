@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bebé Saudável — Moçambique</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Bebé Saudável">
+  <meta name="theme-color" content="#2d7d4f">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #2d7d4f;
+    --verde-claro: #4aab6d;
+    --amarelo: #f5c842;
+    --laranja: #f08c3a;
+    --bege: #fdf6ec;
+    --branco: #ffffff;
+    --cinza: #6b7280;
+    --vermelho: #e05252;
+    --azul: #3a7abf;
+    --sombra: 0 4px 24px rgba(45,125,79,0.13);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Nunito',sans-serif; background:var(--bege); color:#222; min-height:100vh; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-claro) 100%);
+    color:#fff; padding:0;
+    position:sticky; top:0; z-index:100;
+    box-shadow:0 2px 12px rgba(0,0,0,0.15);
+  }
+  .header-inner {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px;
+  }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-icon { font-size:2rem; }
+  .logo h1 { font-family:'Playfair Display',serif; font-size:1.4rem; line-height:1.1; }
+  .logo p { font-size:0.72rem; opacity:0.85; font-weight:300; }
+
+  /* NAV TABS */
+  nav {
+    display:flex; background:rgba(0,0,0,0.12);
+    overflow-x:auto; scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar { display:none; }
+  nav button {
+    flex:0 0 auto; padding:10px 18px; background:none; border:none;
+    color:rgba(255,255,255,0.75); font-family:'Nunito',sans-serif;
+    font-size:0.82rem; font-weight:600; cursor:pointer;
+    border-bottom:3px solid transparent; transition:all .2s; white-space:nowrap;
+  }
+  nav button.active { color:#fff; border-bottom-color:var(--amarelo); }
+  nav button:hover { color:#fff; }
+
+  /* MAIN */
+  main { max-width:520px; margin:0 auto; padding:20px 16px 80px; }
+
+  /* CARDS */
+  .card {
+    background:#fff; border-radius:18px; padding:20px;
+    box-shadow:var(--sombra); margin-bottom:18px;
+    animation: fadeUp .35s ease both;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+  .card h2 {
+    font-family:'Playfair Display',serif; font-size:1.15rem;
+    color:var(--verde); margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+
+  /* FORM */
+  .form-group { margin-bottom:14px; }
+  label { display:block; font-size:0.82rem; font-weight:700; color:var(--cinza); margin-bottom:5px; }
+  input, select {
+    width:100%; padding:10px 14px; border:2px solid #e5e7eb;
+    border-radius:10px; font-family:'Nunito',sans-serif; font-size:0.95rem;
+    transition:border-color .2s; background:#fff;
+  }
+  input:focus, select:focus { outline:none; border-color:var(--verde-claro); }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .btn {
+    width:100%; padding:13px; border:none; border-radius:12px;
+    font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700;
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-verde { background:var(--verde); color:#fff; }
+  .btn-verde:hover { background:var(--verde-claro); transform:translateY(-1px); }
+  .btn-laranja { background:var(--laranja); color:#fff; }
+  .btn-laranja:hover { background:#e07a28; transform:translateY(-1px); }
+
+  /* RESULTADO */
+  .resultado {
+    border-radius:14px; padding:16px 18px; margin-top:16px;
+    font-weight:600; font-size:0.95rem; line-height:1.5;
+    display:none;
+  }
+  .resultado.verde { background:#e8f5ee; color:#1a5c34; border-left:5px solid var(--verde); }
+  .resultado.amarelo { background:#fff8e1; color:#7a5500; border-left:5px solid var(--amarelo); }
+  .resultado.vermelho { background:#fdecea; color:#8b1a1a; border-left:5px solid var(--vermelho); }
+
+  /* SINTOMAS */
+  .sintoma-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .sintoma-btn {
+    padding:10px 8px; border:2px solid #e5e7eb; border-radius:12px;
+    background:#fff; font-family:'Nunito',sans-serif; font-size:0.82rem;
+    font-weight:600; cursor:pointer; text-align:center; transition:all .2s;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+  }
+  .sintoma-btn .ico { font-size:1.4rem; }
+  .sintoma-btn.sel { border-color:var(--verde); background:#e8f5ee; color:var(--verde); }
+  .sintoma-btn:hover { border-color:var(--verde-claro); }
+
+  /* REGISTROS */
+  .registro-item {
+    border-left:4px solid var(--verde-claro); padding:10px 14px;
+    background:#f4fbf7; border-radius:0 10px 10px 0; margin-bottom:10px;
+    font-size:0.88rem;
+  }
+  .registro-item strong { color:var(--verde); }
+  .registro-item .data { color:var(--cinza); font-size:0.78rem; }
+  .empty { text-align:center; color:var(--cinza); font-size:0.9rem; padding:24px 0; }
+
+  /* PEDIATRAS */
+  .pediatra-card {
+    border-radius:14px; border:2px solid #e5e7eb; padding:14px 16px;
+    margin-bottom:12px; display:flex; align-items:flex-start; gap:14px;
+    background:#fff; transition:border-color .2s;
+  }
+  .pediatra-card:hover { border-color:var(--verde-claro); }
+  .ped-avatar {
+    width:52px; height:52px; border-radius:50%; font-size:1.6rem;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .ped-info h3 { font-size:0.98rem; font-weight:700; color:#1a1a1a; }
+  .ped-info p { font-size:0.8rem; color:var(--cinza); margin-top:2px; }
+  .ped-info .local { font-size:0.78rem; color:var(--verde); font-weight:600; margin-top:4px; }
+  .ped-tel {
+    display:inline-block; margin-top:6px; padding:5px 12px;
+    background:var(--verde); color:#fff; border-radius:8px;
+    font-size:0.78rem; font-weight:700; text-decoration:none;
+    transition:background .2s;
+  }
+  .ped-tel:hover { background:var(--verde-claro); }
+
+  /* CURVA PESO */
+  .curva-box { text-align:center; }
+  canvas { max-width:100%; border-radius:10px; }
+
+  /* FOOTER */
+  .disclaimer {
+    background:#fff3e0; border-radius:12px; padding:14px;
+    font-size:0.78rem; color:#7a5500; margin-top:8px;
+    border-left:4px solid var(--laranja);
+  }
+
+  /* BADGE */
+  .badge {
+    display:inline-block; padding:3px 10px; border-radius:20px;
+    font-size:0.72rem; font-weight:700; margin-left:6px;
+  }
+  .badge-verde { background:#e8f5ee; color:var(--verde); }
+  .badge-amarelo { background:#fff8e1; color:#7a5500; }
+
+  /* SECTION */
+  .section { display:none; }
+  .section.active { display:block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🌿</span>
+      <div>
+        <h1>Bebé Saudável</h1>
+        <p>Cuidar com amor · Moçambique</p>
+      </div>
+    </div>
+    <span style="font-size:1.5rem">🇲🇿</span>
+  </div>
+  <nav>
+    <button class="active" onclick="showSection('crescimento')">📏 Crescimento</button>
+    <button onclick="showSection('sintomas')">🩺 Sintomas</button>
+    <button onclick="showSection('registros')">📒 Registos</button>
+    <button onclick="showSection('pediatras')">👨‍⚕️ Pediatras</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- CRESCIMENTO -->
+<div class="section active" id="sec-crescimento">
+
+  <div class="card">
+    <h2>📏 Registo de Crescimento</h2>
+    <div class="form-group">
+      <label>Nome do bebé</label>
+      <input type="text" id="nome" placeholder="Ex: Maria Beatriz">
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Idade (meses)</label>
+        <input type="number" id="idade" min="0" max="60" placeholder="Ex: 6">
+      </div>
+      <div class="form-group">
+        <label>Sexo</label>
+        <select id="sexo">
+          <option value="f">Feminino</option>
+          <option value="m">Masculino</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Peso (kg)</label>
+        <input type="number" id="peso" step="0.1" placeholder="Ex: 7.5">
+      </div>
+      <div class="form-group">
+        <label>Altura (cm)</label>
+        <input type="number" id="altura" step="0.1" placeholder="Ex: 68">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Perímetro craniano (cm)</label>
+      <input type="number" id="cranio" step="0.1" placeholder="Ex: 43">
+    </div>
+    <button class="btn btn-verde" onclick="avaliarCrescimento()">✅ Avaliar Crescimento</button>
+    <div class="resultado" id="res-crescimento"></div>
+  </div>
+
+  <div class="card curva-box">
+    <h2>📊 Curva de Peso (OMS)</h2>
+    <canvas id="curvaCanvas" width="440" height="220"></canvas>
+    <p style="font-size:0.75rem;color:var(--cinza);margin-top:8px">Baseado nas curvas de crescimento da OMS</p>
+  </div>
+
+</div>
+
+<!-- SINTOMAS -->
+<div class="section" id="sec-sintomas">
+
+  <div class="card">
+    <h2>🩺 O bebé está com algum sintoma?</h2>
+    <p style="font-size:0.85rem;color:var(--cinza);margin-bottom:14px">Seleciona os sintomas que o teu bebé tem agora:</p>
+    <div class="sintoma-grid">
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'diarreia')">
+        <span class="ico">💩</span>Fezes moles/diarreia
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'vomito')">
+        <span class="ico">🤢</span>Vómito
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'febre')">
+        <span class="ico">🌡️</span>Febre
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'choro')">
+        <span class="ico">😭</span>Choro excessivo
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'nao_come')">
+        <span class="ico">🍼</span>Não quer comer
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'tosse')">
+        <span class="ico">😮‍💨</span>Tosse / dif. respirar
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'fontanela')">
+        <span class="ico">🔴</span>Moleira inchada
+      </button>
+      <button class="sintoma-btn" onclick="toggleSintoma(this,'pele')">
+        <span class="ico">🔶</span>Pele amarela/erupção
+      </button>
+    </div>
+
+    <div class="form-group">
+      <label>Quantas vezes por dia? (vómito/diarreia)</label>
+      <select id="freq">
+        <option value="1">1-2 vezes (leve)</option>
+        <option value="2">3-5 vezes (moderado)</option>
+        <option value="3">Mais de 5 vezes (grave)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Há quanto tempo tem estes sintomas?</label>
+      <select id="duracao">
+        <option value="1">Menos de 24 horas</option>
+        <option value="2">1-3 dias</option>
+        <option value="3">Mais de 3 dias</option>
+      </select>
+    </div>
+
+    <button class="btn btn-laranja" onclick="avaliarSintomas()">🔍 Analisar Sintomas</button>
+    <div class="resultado" id="res-sintomas"></div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Atenção:</strong> Este aplicativo é apenas orientativo. Em caso de dúvida, consulta sempre um médico ou agente de saúde. Nunca substitui uma consulta médica.
+  </div>
+
+</div>
+
+<!-- REGISTROS -->
+<div class="section" id="sec-registros">
+  <div class="card">
+    <h2>📒 Histórico do Bebé</h2>
+    <div id="lista-registros">
+      <div class="empty">📭 Ainda sem registos.<br>Faz uma avaliação no separador Crescimento!</div>
+    </div>
+    <button class="btn btn-verde" style="margin-top:10px" onclick="limparRegistros()">🗑️ Limpar registos</button>
+  </div>
+</div>
+
+<!-- PEDIATRAS -->
+<div class="section" id="sec-pediatras">
+  <div class="card">
+    <h2>👨‍⚕️ Pediatras em Moçambique</h2>
+    <p style="font-size:0.85rem;color:var(--cinza);margin-bottom:16px">Contacta os melhores especialistas perto de ti:</p>
+
+    <div class="pediatra-card">
+      <div class="ped-avatar" style="background:#e8f5ee">👩‍⚕️</div>
+      <div class="ped-info">
+        <h3>Dra. Ana Paula Machava</h3>
+        <p>Pediatra — 15 anos de experiência</p>
+        <p class="local">📍 Hospital Central de Maputo</p>
+        <a class="ped-tel" href="tel:+25821301000">📞 +258 21 301 000</a>
+      </div>
+    </div>
+
+    <div class="pediatra-card">
+      <div class="ped-avatar" style="background:#e3f0fb">👨‍⚕️</div>
+      <div class="ped-info">
+        <h3>Dr. Carlos Nhampule</h3>
+        <p>Neonatologista — Recém-nascidos</p>
+        <p class="local">📍 Clínica Cruz Azul, Maputo</p>
+        <a class="ped-tel" href="tel:+25821491000">📞 +258 21 491 000</a>
+      </div>
+    </div>
+
+    <div class="pediatra-card">
+      <div class="ped-avatar" style="background:#fff3e0">👩‍⚕️</div>
+      <div class="ped-info">
+        <h3>Dra. Lurdes Tembe</h3>
+        <p>Pediatra — Nutrição infantil</p>
+        <p class="local">📍 Hospital Geral José Macamo, Maputo</p>
+        <a class="ped-tel" href="tel:+25821460000">📞 +258 21 460 000</a>
+      </div>
+    </div>
+
+    <div class="pediatra-card">
+      <div class="ped-avatar" style="background:#fce4ec">👨‍⚕️</div>
+      <div class="ped-info">
+        <h3>Dr. Hélio Mondlane</h3>
+        <p>Pediatra — Beira / Sofala</p>
+        <p class="local">📍 Hospital Central da Beira</p>
+        <a class="ped-tel" href="tel:+25823320000">📞 +258 23 320 000</a>
+      </div>
+    </div>
+
+    <div class="pediatra-card">
+      <div class="ped-avatar" style="background:#e8f5ee">👩‍⚕️</div>
+      <div class="ped-info">
+        <h3>Dra. Fátima Cossa</h3>
+        <p>Pediatra — Nampula / Norte</p>
+        <p class="local">📍 Hospital Central de Nampula</p>
+        <a class="ped-tel" href="tel:+25826212000">📞 +258 26 212 000</a>
+      </div>
+    </div>
+
+    <div style="background:#e8f5ee;border-radius:12px;padding:14px;margin-top:8px;font-size:0.82rem;color:#1a5c34;">
+      🚨 <strong>Urgência Pediátrica 24h:</strong> Liga para o <strong>+258 21 320 000</strong> (SAMU Moçambique) ou dirije-te ao hospital mais próximo.
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// --- NAVEGAÇÃO ---
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// --- CRESCIMENTO ---
+// Tabelas OMS simplificadas: [peso_min, peso_ideal, peso_max] por mês (sexo feminino)
+const pesoOMS_f = [
+  [2.3,3.2,4.2],[2.9,4.2,5.5],[3.4,5.1,6.6],[4.0,5.8,7.5],[4.4,6.4,8.2],
+  [4.8,6.9,8.8],[5.1,7.3,9.3],[5.3,7.6,9.7],[5.6,7.9,10.1],[5.8,8.2,10.4],
+  [5.9,8.5,10.8],[6.1,8.7,11.0],[6.3,8.9,11.3],[6.4,9.2,11.5]
+];
+const pesoOMS_m = [
+  [2.5,3.3,4.4],[3.2,4.5,5.8],[3.8,5.6,7.1],[4.4,6.4,8.0],[4.9,7.0,8.7],
+  [5.3,7.5,9.3],[5.7,7.9,9.8],[5.9,8.3,10.2],[6.2,8.6,10.5],[6.4,8.9,10.9],
+  [6.6,9.2,11.2],[6.8,9.4,11.5],[6.9,9.6,11.8],[7.1,9.9,12.1]
+];
+
+function avaliarCrescimento() {
+  const nome = document.getElementById('nome').value || 'O bebé';
+  const idade = parseInt(document.getElementById('idade').value);
+  const sexo = document.getElementById('sexo').value;
+  const peso = parseFloat(document.getElementById('peso').value);
+  const altura = parseFloat(document.getElementById('altura').value);
+  const cranio = parseFloat(document.getElementById('cranio').value);
+
+  const res = document.getElementById('res-crescimento');
+  if (isNaN(idade) || isNaN(peso)) {
+    res.className='resultado vermelho'; res.style.display='block';
+    res.innerHTML='⚠️ Por favor preenche pelo menos a idade e o peso.'; return;
+  }
+
+  const tabela = sexo==='f' ? pesoOMS_f : pesoOMS_m;
+  const idx = Math.min(idade, tabela.length-1);
+  const [pMin, pIdeal, pMax] = tabela[idx];
+
+  let msgs = []; let nivel = 'verde';
+
+  // Peso
+  if (peso < pMin) {
+    msgs.push(`⚠️ O peso (${peso}kg) está abaixo do esperado (min. ${pMin}kg). Consulta um pediatra.`);
+    nivel = 'vermelho';
+  } else if (peso > pMax) {
+    msgs.push(`⚠️ O peso (${peso}kg) está acima do esperado (max. ${pMax}kg). Consulta um pediatra.`);
+    nivel = 'amarelo';
+  } else {
+    msgs.push(`✅ Peso (${peso}kg) está normal para ${idade} meses. (Ideal: ${pIdeal}kg)`);
+  }
+
+  // Altura aproximada
+  if (!isNaN(altura)) {
+    const altRef = 50 + idade * 1.8;
+    if (altura < altRef - 8) { msgs.push(`⚠️ Altura (${altura}cm) pode estar baixa. Regista na próxima consulta.`); if(nivel==='verde') nivel='amarelo'; }
+    else msgs.push(`✅ Altura (${altura}cm) parece adequada.`);
+  }
+
+  // Perímetro craniano
+  if (!isNaN(cranio)) {
+    const cranioRef = 34 + idade * 0.5;
+    if (cranio < cranioRef - 3 || cranio > cranioRef + 4) {
+      msgs.push(`⚠️ Perímetro craniano (${cranio}cm) fora do intervalo habitual. Mostra ao médico.`);
+      if(nivel==='verde') nivel='amarelo';
+    } else {
+      msgs.push(`✅ Perímetro craniano (${cranio}cm) dentro do normal.`);
+    }
+  }
+
+  res.className='resultado '+nivel;
+  res.style.display='block';
+  res.innerHTML = `<strong>📋 Avaliação de ${nome} (${idade} meses):</strong><br><br>` + msgs.join('<br><br>');
+
+  // Salvar registo
+  salvarRegisto(nome, idade, peso, altura, cranio, nivel);
+  // Desenhar curva
+  desenharCurva(sexo, peso, idade);
+}
+
+// --- CURVA ---
+function desenharCurva(sexo, pesoAtual, idadeAtual) {
+  const canvas = document.getElementById('curvaCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const tabela = sexo==='f' ? pesoOMS_f : pesoOMS_m;
+  const meses = tabela.length;
+  const padL=38, padR=14, padT=14, padB=30;
+  const gW = W-padL-padR, gH = H-padT-padB;
+
+  ctx.fillStyle='#f9fafb'; ctx.fillRect(0,0,W,H);
+
+  // Grade
+  ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=padT+i*(gH/4);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+  }
+
+  function xPos(m){ return padL+(m/(meses-1))*gW; }
+  function yPos(kg){ return padT+gH-(kg/15)*gH; }
+
+  // Banda verde (normal)
+  ctx.beginPath();
+  tabela.forEach((r,i)=>{ i===0?ctx.moveTo(xPos(i),yPos(r[2])):ctx.lineTo(xPos(i),yPos(r[2])); });
+  tabela.slice().reverse().forEach((r,i)=>{ ctx.lineTo(xPos(meses-1-i),yPos(r[0])); });
+  ctx.closePath();
+  ctx.fillStyle='rgba(74,171,109,0.15)'; ctx.fill();
+
+  // Linha ideal
+  ctx.beginPath(); ctx.strokeStyle='#2d7d4f'; ctx.lineWidth=2;
+  tabela.forEach((r,i)=>{ i===0?ctx.moveTo(xPos(i),yPos(r[1])):ctx.lineTo(xPos(i),yPos(r[1])); });
+  ctx.stroke();
+
+  // Eixos
+  ctx.strokeStyle='#9ca3af'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
+
+  // Labels
+  ctx.fillStyle='#6b7280'; ctx.font='10px Nunito,sans-serif'; ctx.textAlign='center';
+  [0,3,6,9,12].forEach(m=>{ if(m<meses) ctx.fillText(m+'m',xPos(m),H-padB+12); });
+  ctx.textAlign='right';
+  [3,6,9,12,15].forEach(kg=>{ ctx.fillText(kg+'kg',padL-4,yPos(kg)+3); });
+
+  // Ponto atual
+  if(!isNaN(pesoAtual) && !isNaN(idadeAtual) && idadeAtual < meses){
+    const px=xPos(idadeAtual), py=yPos(pesoAtual);
+    ctx.beginPath(); ctx.arc(px,py,7,0,2*Math.PI);
+    ctx.fillStyle='#f5c842'; ctx.fill();
+    ctx.strokeStyle='#d4a000'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#222'; ctx.font='bold 10px Nunito'; ctx.textAlign='center';
+    ctx.fillText(pesoAtual+'kg',px,py-11);
+  }
+
+  // Legenda
+  ctx.font='10px Nunito'; ctx.fillStyle='#2d7d4f'; ctx.textAlign='left';
+  ctx.fillText('— Ideal (OMS)', padL+4, padT+12);
+}
+
+// --- SINTOMAS ---
+const sintomasSel = new Set();
+function toggleSintoma(btn, id) {
+  btn.classList.toggle('sel');
+  sintomasSel.has(id) ? sintomasSel.delete(id) : sintomasSel.add(id);
+}
+
+function avaliarSintomas() {
+  const freq = parseInt(document.getElementById('freq').value);
+  const dur = parseInt(document.getElementById('duracao').value);
+  const res = document.getElementById('res-sintomas');
+
+  if(sintomasSel.size===0){
+    res.className='resultado verde'; res.style.display='block';
+    res.innerHTML='✅ Nenhum sintoma selecionado. O teu bebé parece estar bem! Continua a amamentar e a hidratar.';
+    return;
+  }
+
+  let nivel='verde'; let msgs=[]; let irMedico=false;
+
+  if(sintomasSel.has('febre')){
+    if(dur>=2||freq>=2){msgs.push('🌡️ <strong>Febre:</strong> Se durar mais de 2 dias ou for muito alta (>38.5°C), vai ao médico urgente.');nivel='vermelho';irMedico=true;}
+    else{msgs.push('🌡️ <strong>Febre leve:</strong> Mantém o bebé hidratado. Usa paracetamol infantil se recomendado pelo médico.');}
+  }
+  if(sintomasSel.has('diarreia')){
+    if(freq===3){msgs.push('💩 <strong>Diarreia grave:</strong> Mais de 5 vezes/dia pode causar desidratação. Vai ao médico AGORA.');nivel='vermelho';irMedico=true;}
+    else if(dur>=2){msgs.push('💩 <strong>Diarreia:</strong> Com mais de 2 dias, vai ao médico. Entretanto, dá SRO (sais reidratação oral).');nivel='amarelo';}
+    else{msgs.push('💩 <strong>Diarreia leve:</strong> Dá bastante líquido. Continua a amamentar. Observa se piora.');}
+  }
+  if(sintomasSel.has('vomito')){
+    if(freq===3){msgs.push('🤢 <strong>Vómito frequente:</strong> Mais de 5x/dia é grave. Vai ao médico urgente.');nivel='vermelho';irMedico=true;}
+    else if(dur>=2){msgs.push('🤢 <strong>Vómito persistente:</strong> Com mais de 2 dias, consulta o médico. Hidrata aos poucos.');if(nivel==='verde')nivel='amarelo';}
+    else{msgs.push('🤢 <strong>Vómito ocasional:</strong> Em bebés até 6 meses é normal algum regurgito. Se for em jacto, vai ao médico.');}
+  }
+  if(sintomasSel.has('fontanela')){
+    msgs.push('🔴 <strong>Moleira inchada:</strong> É sinal de alerta. Vai ao médico HOJE.');nivel='vermelho';irMedico=true;
+  }
+  if(sintomasSel.has('tosse')){
+    if(freq>=2){msgs.push('😮‍💨 <strong>Dificuldade a respirar:</strong> Vai ao médico URGENTE!');nivel='vermelho';irMedico=true;}
+    else{msgs.push('😮‍💨 <strong>Tosse:</strong> Se tiver respiração ruidosa ou azulada em volta da boca, vai ao médico urgente.');}
+  }
+  if(sintomasSel.has('choro')){
+    msgs.push('😭 <strong>Choro excessivo:</strong> Verifica fome, fraldas, temperatura. Se não acalmar em 2h ou tiver febre, vai ao médico.');if(nivel==='verde')nivel='amarelo';
+  }
+  if(sintomasSel.has('nao_come')){
+    if(dur>=2){msgs.push('🍼 <strong>Sem apetite há 2+ dias:</strong> Pode ser sinal de doença. Consulta o médico.');if(nivel==='verde')nivel='amarelo';}
+    else{msgs.push('🍼 <strong>Sem apetite:</strong> Às vezes é normal. Continua a oferecer o peito/biberão. Observa.');}
+  }
+  if(sintomasSel.has('pele')){
+    msgs.push('🔶 <strong>Pele amarelada:</strong> Pode ser icterícia — vai ao médico hoje. Erupções com febre também carecem de atenção.');nivel='vermelho';irMedico=true;
+  }
+
+  if(irMedico){
+    msgs.push('<br>🏥 <strong>CONCLUSÃO: Vai ao médico ou hospital HOJE.</strong> Não esperes mais tempo.');
+  } else if(nivel==='amarelo'){
+    msgs.push('<br>⏰ <strong>CONCLUSÃO: Observa o bebé em casa por mais 24h.</strong> Se piorar, vai ao médico.');
+  } else {
+    msgs.push('<br>🏠 <strong>CONCLUSÃO: Podes cuidar em casa.</strong> Hidrata, amamenta e observa.');
+  }
+
+  res.className='resultado '+nivel;
+  res.style.display='block';
+  res.innerHTML=msgs.join('<br><br>');
+}
+
+// --- REGISTROS ---
+let registros = JSON.parse(localStorage.getItem('bebeRegistros')||'[]');
+
+function salvarRegisto(nome,idade,peso,altura,cranio,nivel){
+  const emoji = nivel==='verde'?'✅':nivel==='amarelo'?'⚠️':'🚨';
+  registros.unshift({nome,idade,peso,altura,cranio,nivel,emoji,data:new Date().toLocaleDateString('pt-MZ')});
+  if(registros.length>20) registros.pop();
+  localStorage.setItem('bebeRegistros',JSON.stringify(registros));
+  renderRegistros();
+}
+
+function renderRegistros(){
+  const el = document.getElementById('lista-registros');
+  if(registros.length===0){
+    el.innerHTML='<div class="empty">📭 Ainda sem registos.<br>Faz uma avaliação no separador Crescimento!</div>';
+    return;
+  }
+  el.innerHTML = registros.map(r=>`
+    <div class="registro-item">
+      <strong>${r.emoji} ${r.nome}</strong> — ${r.idade} meses<br>
+      Peso: ${r.peso}kg ${r.altura?'| Altura: '+r.altura+'cm':''} ${r.cranio?'| Crânio: '+r.cranio+'cm':''}<br>
+      <span class="data">📅 ${r.data}</span>
+    </div>
+  `).join('');
+}
+
+function limparRegistros(){
+  if(confirm('Tens a certeza que queres apagar todos os registos?')){
+    registros=[];
+    localStorage.removeItem('bebeRegistros');
+    renderRegistros();
+  }
+}
+
+// Init
+renderRegistros();
+desenharCurva('f', null, null);
+
+// Registar Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('✅ SW registado'))
+      .catch(err => console.log('❌ Erro SW:', err));
+  });
+}
+</script>
+</body>
+</html>
