@@ -2,548 +2,713 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Bebé Saudável Moçambique</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --verde: #1a6b3a;
-  --verde2: #2d9155;
-  --verde3: #4db876;
-  --bege: #faf7f2;
-  --bege2: #f0ebe0;
-  --amarelo: #f0b429;
-  --laranja: #e8722a;
-  --vermelho: #d94040;
-  --azul: #2563a8;
-  --cinza: #6b7280;
-  --cinza2: #9ca3af;
-  --branco: #ffffff;
-  --sombra: 0 2px 20px rgba(26,107,58,0.10);
-  --sombra2: 0 8px 32px rgba(26,107,58,0.18);
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a4a24">
+<link rel="apple-touch-icon" href="icon-192x192.png">
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
+<script>
+// ===== ARRANQUE IMEDIATO — funciona sem Firebase =====
+window._fb = null;
+window._uid = null;
+window._uname = null;
+window._D = {};
+
+function arrancarApp() {
+  var sess = localStorage.getItem('bs_sess');
+  if (sess) {
+    try {
+      var p = JSON.parse(sess);
+      window._uid = p.uid;
+      window._uname = p.nome;
+      window._D = JSON.parse(localStorage.getItem('bs_d') || '{}');
+      mostrarApp();
+    } catch(e) { mostrarAuth(); }
+  } else {
+    mostrarAuth();
+  }
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',sans-serif;background:var(--bege);color:#1a1a1a;min-height:100vh;}
+
+// Tenta ligar ao Firebase em segundo plano
+// Se falhar ou demorar mais de 3s, usa modo local
+var _firebaseTimeout = setTimeout(function() {
+  if (document.getElementById('loading').style.display !== 'none') {
+    console.log('Firebase timeout — a usar modo local');
+    arrancarApp();
+  }
+}, 2000);
+
+// Carrega Firebase de forma assíncrona sem bloquear
+(async function() {
+  try {
+    var { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    var { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+    var { getFirestore, doc, setDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+    // ⚠️ SUBSTITUI PELOS TEUS VALORES DO FIREBASE
+    var fc = {
+      apiKey:"COLOCA_API_KEY",
+      authDomain:"COLOCA.firebaseapp.com",
+      projectId:"COLOCA_PROJECT_ID",
+      storageBucket:"COLOCA.appspot.com",
+      messagingSenderId:"COLOCA",
+      appId:"COLOCA"
+    };
+
+    // Se credenciais são falsas, usa modo local
+    if (fc.apiKey === "COLOCA_API_KEY") {
+      clearTimeout(_firebaseTimeout);
+      console.log('Firebase não configurado — modo local activo');
+      arrancarApp();
+      return;
+    }
+
+    var app = initializeApp(fc);
+    var auth = getAuth(app);
+    var db = getFirestore(app);
+    window._fb = {auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, doc, setDoc, getDoc};
+
+    onAuthStateChanged(auth, async function(user) {
+      clearTimeout(_firebaseTimeout);
+      if (user) {
+        window._uid = user.uid;
+        window._uname = user.displayName || user.email.split('@')[0];
+        try {
+          var s = await getDoc(doc(db,'users',user.uid));
+          window._D = s.exists() ? s.data() : {};
+        } catch(e) { window._D = {}; }
+        window._D = Object.assign({nome:window._uname,bebes:[],dados:{},plano:'trial',trialInicio:new Date().toISOString()}, window._D);
+        localStorage.setItem('bs_d', JSON.stringify(window._D));
+        mostrarApp();
+      } else {
+        mostrarAuth();
+      }
+    });
+  } catch(e) {
+    clearTimeout(_firebaseTimeout);
+    console.log('Firebase indisponível — modo local:', e.message);
+    arrancarApp();
+  }
+})();
+</script>
+
+<style>
+:root{
+  --g1:#0a4a24;--g2:#0d6030;--g3:#10773c;--g4:#2da05a;--g5:#4cc47a;
+  --bege:#faf8f2;--bege2:#f2ede0;--bege3:#e8e0cc;
+  --am:#e8920a;--am2:#ffc93c;--vm:#c42020;--az:#1455a0;
+  --cinza:#5a6070;--cinza2:#9ca3af;--cinza3:#e5e7eb;
+  --w:#ffffff;
+  --sh:0 2px 20px rgba(10,74,36,0.10);
+  --sh2:0 8px 40px rgba(10,74,36,0.18);
+  --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bege);color:#1a1a1a;min-height:100vh;overflow-x:hidden;}
+
+/* ===== LOADING ===== */
+#loading{position:fixed;inset:0;background:linear-gradient(160deg,#050f08,#0a4a24,#0d6030);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;color:#fff;}
+.ld-ico{font-size:4rem;animation:ld 1.4s ease-in-out infinite;}
+@keyframes ld{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.15) rotate(5deg)}}
+#loading h2{font-family:'Georgia',serif;font-size:1.8rem;margin-top:14px;}
+#loading p{font-size:0.8rem;opacity:0.7;margin-top:6px;letter-spacing:0.08em;}
 
 /* ===== AUTH ===== */
-#auth-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(145deg,#0d4a26 0%,#1a6b3a 50%,#2d9155 100%);
-  padding:20px;
-}
-.auth-box{
-  background:#fff;border-radius:28px;padding:40px 32px;width:100%;max-width:400px;
-  box-shadow:0 24px 64px rgba(0,0,0,0.25);
-}
-.auth-logo{text-align:center;margin-bottom:28px;}
-.auth-logo .ico{font-size:3rem;display:block;margin-bottom:8px;}
-.auth-logo h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--verde);line-height:1.1;}
-.auth-logo p{font-size:0.82rem;color:var(--cinza);margin-top:4px;}
-.auth-tabs{display:flex;background:var(--bege2);border-radius:12px;padding:4px;margin-bottom:24px;}
-.auth-tab{flex:1;padding:10px;border:none;background:none;font-family:'DM Sans',sans-serif;
-  font-size:0.88rem;font-weight:600;cursor:pointer;border-radius:9px;transition:all .2s;color:var(--cinza);}
-.auth-tab.active{background:#fff;color:var(--verde);box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.form-group{margin-bottom:16px;}
-.form-group label{display:block;font-size:0.8rem;font-weight:600;color:var(--cinza);margin-bottom:6px;}
-.form-group input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:12px;
-  font-family:'DM Sans',sans-serif;font-size:0.95rem;transition:border-color .2s;}
-.form-group input:focus{outline:none;border-color:var(--verde2);}
-.btn-primary{width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--verde),var(--verde2));
-  color:#fff;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,107,58,0.3);}
-.auth-form{display:none;}
-.auth-form.active{display:block;}
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,#050f08,#0a4a24 50%,#0d6030);padding:18px;position:relative;overflow:hidden;display:none;}
+#auth-screen::after{content:'🌿';position:absolute;font-size:18rem;opacity:0.04;right:-60px;bottom:-60px;pointer-events:none;}
+.abox{background:rgba(255,255,255,0.97);border-radius:26px;padding:32px 24px;width:100%;max-width:400px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.4);position:relative;z-index:1;max-height:96vh;overflow-y:auto;}
+.alogo{text-align:center;margin-bottom:20px;}
+.alogo span{font-size:3rem;display:block;}
+.alogo h1{font-family:'Georgia',serif;font-size:2.1rem;color:var(--g1);line-height:1;}
+.alogo p{font-size:0.75rem;color:var(--cinza);margin-top:4px;letter-spacing:0.04em;}
+.trial-badge{background:linear-gradient(135deg,var(--am),var(--am2));color:#fff;border-radius:12px;
+  padding:10px 14px;text-align:center;margin-bottom:18px;font-size:0.82rem;font-weight:700;}
+.trial-badge span{display:block;font-size:1.3rem;font-weight:800;}
+.atabs{display:flex;background:var(--bege2);border-radius:12px;padding:3px;margin-bottom:16px;}
+.atab{flex:1;padding:9px;border:none;background:none;font-family:system-ui,-apple-system,sans-serif;font-size:0.84rem;font-weight:700;cursor:pointer;border-radius:10px;transition:all .2s;color:var(--cinza);}
+.atab.active{background:#fff;color:var(--g1);box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:0.72rem;font-weight:800;color:var(--cinza);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;font-size:0.9rem;transition:border-color .2s;background:#fff;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--g4);}
+.btn-p{width:100%;padding:13px;border:none;border-radius:13px;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;
+  font-family:system-ui,-apple-system,sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;transition:all .2s;letter-spacing:0.02em;}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(10,74,36,0.30);}
+.btn-p:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.aform{display:none;}
+.aform.active{display:block;}
+.aerr{background:#fdecea;color:#8b1a1a;border-radius:9px;padding:9px 12px;font-size:0.8rem;margin-bottom:11px;display:none;}
+
+/* PLANOS */
+.planos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+.pc{border:2px solid var(--cinza3);border-radius:12px;padding:11px;cursor:pointer;transition:all .2s;position:relative;}
+.pc:hover,.pc.sel{border-color:var(--g3);background:#e8f5ee;}
+.pc.pop::before{content:'⭐ POPULAR';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  background:var(--am);color:#fff;font-size:0.6rem;font-weight:800;padding:2px 8px;border-radius:8px;white-space:nowrap;}
+.pc-nome{font-weight:800;font-size:0.84rem;color:var(--g1);}
+.pc-preco{font-family:'Georgia',serif;font-size:1.4rem;font-weight:700;color:var(--g1);margin:2px 0;}
+.pc-desc{font-size:0.7rem;color:var(--cinza);}
 
 /* ===== APP ===== */
 #app-screen{display:none;}
-header{
-  background:linear-gradient(135deg,var(--verde) 0%,var(--verde2) 100%);
-  color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.15);
-}
-.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
-.header-top h1{font-family:'Playfair Display',serif;font-size:1.25rem;}
-.header-top p{font-size:0.72rem;opacity:0.8;}
-.user-info{display:flex;align-items:center;gap:8px;}
+
+/* HEADER */
+.app-header{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+  padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,0.2);}
+.menu-btn{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,0.15);border:none;
+  color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-info h1{font-family:'Georgia',serif;font-size:1.2rem;line-height:1;}
+.hdr-info p{font-size:0.7rem;opacity:0.8;margin-top:1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
 .avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);
-  display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;}
-.logout-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:6px 12px;
-  border-radius:8px;font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;flex-shrink:0;}
+.trial-hdr{background:rgba(232,146,10,0.3);border:1px solid rgba(255,200,60,0.5);
+  border-radius:8px;padding:3px 8px;font-size:0.68rem;font-weight:800;color:#ffc93c;}
 
-/* BEBE SELECTOR */
-.bebe-bar{background:rgba(0,0,0,0.1);padding:10px 16px;display:flex;align-items:center;gap:10px;overflow-x:auto;}
-.bebe-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);
-  border:2px solid transparent;border-radius:20px;padding:6px 14px;cursor:pointer;
-  white-space:nowrap;transition:all .2s;font-size:0.82rem;color:#fff;font-weight:600;}
-.bebe-chip.active{background:rgba(255,255,255,0.3);border-color:rgba(255,255,255,0.6);}
-.bebe-chip-add{background:rgba(255,255,255,0.1);border:2px dashed rgba(255,255,255,0.4);
-  border-radius:20px;padding:6px 14px;cursor:pointer;color:rgba(255,255,255,0.8);
-  font-size:0.82rem;white-space:nowrap;}
-
-/* NAV */
-nav{display:flex;background:rgba(0,0,0,0.12);overflow-x:auto;scrollbar-width:none;}
-nav::-webkit-scrollbar{display:none;}
-nav button{flex:0 0 auto;padding:9px 14px;background:none;border:none;color:rgba(255,255,255,0.7);
-  font-family:'DM Sans',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;
-  border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
-nav button.active{color:#fff;border-bottom-color:var(--amarelo);}
+/* SIDEBAR */
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;backdrop-filter:blur(3px);}
+.sidebar-overlay.open{display:block;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:82%;max-width:300px;background:linear-gradient(180deg,var(--g1) 0%,#0a3a1c 100%);
+  z-index:201;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar.open{transform:translateX(0);}
+.sb-header{padding:30px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sb-header h2{font-family:'Georgia',serif;color:#fff;font-size:1.6rem;}
+.sb-header p{color:rgba(255,255,255,0.6);font-size:0.76rem;margin-top:3px;}
+.sb-bebe{background:rgba(255,255,255,0.08);border-radius:12px;padding:12px;margin:16px 20px 0;}
+.sb-bebe p{color:rgba(255,255,255,0.6);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+.bebe-chips{display:flex;flex-direction:column;gap:6px;}
+.bchip{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;
+  transition:all .2s;font-size:0.84rem;font-weight:700;color:rgba(255,255,255,0.75);}
+.bchip:hover,.bchip.active{background:rgba(255,255,255,0.15);color:#fff;}
+.bchip-add{border:2px dashed rgba(255,255,255,0.25);border-radius:9px;padding:7px 10px;
+  cursor:pointer;color:rgba(255,255,255,0.5);font-size:0.78rem;text-align:center;margin-top:4px;}
+.sb-nav{flex:1;padding:14px 12px;}
+.sb-section{color:rgba(255,255,255,0.4);font-size:0.66rem;font-weight:800;text-transform:uppercase;
+  letter-spacing:0.08em;padding:8px 10px 4px;}
+.sb-btn{width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;
+  background:none;color:rgba(255,255,255,0.75);font-family:system-ui,-apple-system,sans-serif;font-size:0.88rem;
+  font-weight:700;cursor:pointer;border-radius:11px;text-align:left;transition:all .2s;margin-bottom:2px;}
+.sb-btn:hover,.sb-btn.active{background:rgba(255,255,255,0.12);color:#fff;}
+.sb-btn .sb-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.1);}
+.sb-logout{width:100%;padding:10px;border:2px solid rgba(255,255,255,0.2);border-radius:11px;
+  background:none;color:rgba(255,255,255,0.7);font-family:system-ui,-apple-system,sans-serif;font-size:0.84rem;font-weight:700;cursor:pointer;}
 
 /* MAIN */
-main{max-width:520px;margin:0 auto;padding:16px 14px 100px;}
-
-/* CARDS */
-.card{background:#fff;border-radius:20px;padding:18px;box-shadow:var(--sombra);margin-bottom:16px;animation:fadeUp .3s ease both;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--bege2);}
-.card-header h2{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--verde);}
-.card-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
-
-/* FORMS */
-.fg{margin-bottom:13px;}
-.fg label{display:block;font-size:0.78rem;font-weight:600;color:var(--cinza);margin-bottom:5px;}
-.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:10px;
-  font-family:'DM Sans',sans-serif;font-size:0.9rem;transition:border-color .2s;background:#fff;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--verde2);}
-.fg textarea{resize:vertical;min-height:70px;}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.btn-save{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--verde),var(--verde2));
-  color:#fff;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;}
-.btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,107,58,0.25);}
-.btn-outline{width:100%;padding:11px;border:2px solid var(--verde2);border-radius:12px;background:none;
-  color:var(--verde);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:8px;}
-
-/* RADIO GROUP */
-.radio-group{display:flex;gap:8px;flex-wrap:wrap;}
-.radio-opt{flex:1;min-width:80px;}
-.radio-opt input{display:none;}
-.radio-opt label{display:block;text-align:center;padding:9px 6px;border:2px solid #e5e7eb;border-radius:10px;
-  font-size:0.8rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--cinza);}
-.radio-opt input:checked + label{border-color:var(--verde2);background:#e8f5ee;color:var(--verde);}
-
-/* VACINAS */
-.vacina-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;
-  margin-bottom:8px;border:2px solid #e5e7eb;transition:all .2s;cursor:pointer;}
-.vacina-item.feita{background:#e8f5ee;border-color:#a8d8b8;}
-.vacina-item.pendente{background:#fff8e1;border-color:#f5c842;}
-.vacina-item.atrasada{background:#fdecea;border-color:#f5a0a0;}
-.vacina-check{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.vacina-info h4{font-size:0.88rem;font-weight:700;}
-.vacina-info p{font-size:0.75rem;color:var(--cinza);margin-top:2px;}
-.vacina-badge{margin-left:auto;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;flex-shrink:0;}
-
-/* MEDICAÇÃO */
-.med-card{border:2px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:10px;position:relative;}
-.med-card h4{font-size:0.92rem;font-weight:700;color:var(--verde);}
-.med-card p{font-size:0.8rem;color:var(--cinza);margin-top:3px;}
-.med-horarios{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
-.med-hora{background:var(--bege2);padding:4px 10px;border-radius:8px;font-size:0.78rem;font-weight:600;color:var(--verde);}
-.med-delete{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;font-size:1rem;color:var(--cinza2);}
-
-/* ALARMES */
-.alarme-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bege2);border-radius:12px;margin-bottom:8px;}
-.alarme-ico{font-size:1.4rem;}
-.alarme-info{flex:1;}
-.alarme-info h4{font-size:0.88rem;font-weight:700;}
-.alarme-info p{font-size:0.75rem;color:var(--cinza);}
-.alarme-toggle{width:44px;height:24px;background:#e5e7eb;border-radius:12px;position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0;}
-.alarme-toggle.on{background:var(--verde2);}
-.alarme-toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,0.2);}
-.alarme-toggle.on::after{left:23px;}
-
-/* CRESCIMENTO */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.stat-box{background:var(--bege2);border-radius:14px;padding:14px;text-align:center;}
-.stat-box .val{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--verde);font-weight:700;}
-.stat-box .lbl{font-size:0.72rem;color:var(--cinza);margin-top:2px;}
-.stat-box .sub{font-size:0.7rem;color:var(--verde3);font-weight:600;margin-top:2px;}
-
-/* RESULTADO */
-.resultado{border-radius:12px;padding:14px 16px;margin-top:12px;font-size:0.88rem;line-height:1.5;display:none;}
-.resultado.verde{background:#e8f5ee;color:#1a5c34;border-left:5px solid var(--verde);}
-.resultado.amarelo{background:#fff8e1;color:#7a5500;border-left:5px solid var(--amarelo);}
-.resultado.vermelho{background:#fdecea;color:#8b1a1a;border-left:5px solid var(--vermelho);}
-
-/* SECTION */
+main{max-width:520px;margin:0 auto;padding:14px 13px 90px;}
 .section{display:none;}
 .section.active{display:block;}
 
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
-.modal-overlay.open{display:flex;}
-.modal{background:#fff;border-radius:24px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;}
-.modal h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--verde);margin-bottom:16px;}
-.modal-close{float:right;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--cinza);}
+/* CARDS */
+.card{background:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:13px;animation:fu .3s ease both;}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card-hdr{display:flex;align-items:center;gap:9px;margin-bottom:13px;padding-bottom:10px;border-bottom:2px solid var(--bege2);}
+.card-hdr h2{font-family:'Georgia',serif;font-size:1.05rem;color:var(--g1);}
+.cico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
 
-/* NOTIF TOAST */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;
-  padding:12px 20px;border-radius:12px;font-size:0.85rem;font-weight:600;z-index:300;
-  opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
-.toast.show{opacity:1;}
+/* ===== TRIAGEM ===== */
+.triagem-screen{position:fixed;inset:0;background:var(--bege);z-index:300;display:flex;flex-direction:column;overflow:hidden;}
+.tri-header{background:linear-gradient(135deg,var(--g1),var(--g3));padding:16px 18px;color:#fff;}
+.tri-header h2{font-family:'Georgia',serif;font-size:1.3rem;}
+.tri-header p{font-size:0.76rem;opacity:0.85;margin-top:3px;}
+.tri-progress{height:5px;background:rgba(255,255,255,0.2);margin-top:12px;border-radius:3px;}
+.tri-bar{height:100%;background:var(--am2);border-radius:3px;transition:width .4s ease;}
+.tri-body{flex:1;overflow-y:auto;padding:20px 16px;}
+.tri-pergunta{animation:fu .3s ease both;}
+.tri-pergunta h3{font-family:'Georgia',serif;font-size:1.4rem;color:var(--g1);margin-bottom:6px;line-height:1.3;}
+.tri-pergunta p{font-size:0.84rem;color:var(--cinza);margin-bottom:18px;line-height:1.5;}
+.tri-opcoes{display:flex;flex-direction:column;gap:10px;}
+.tri-opt{padding:14px 16px;border:2px solid var(--cinza3);border-radius:14px;cursor:pointer;
+  transition:all .2s;font-size:0.92rem;font-weight:700;text-align:left;background:#fff;
+  display:flex;align-items:center;gap:10px;font-family:system-ui,-apple-system,sans-serif;}
+.tri-opt:hover{border-color:var(--g4);background:#e8f5ee;color:var(--g1);}
+.tri-opt.sel{border-color:var(--g3);background:#e8f5ee;color:var(--g1);}
+.tri-opt-ico{font-size:1.4rem;flex-shrink:0;}
+.tri-footer{padding:14px 16px;background:#fff;border-top:2px solid var(--cinza3);}
+.btn-tri{width:100%;padding:13px;border:none;border-radius:13px;background:linear-gradient(135deg,var(--g1),var(--g3));
+  color:#fff;font-family:system-ui,-apple-system,sans-serif;font-size:1rem;font-weight:800;cursor:pointer;}
+
+/* RESULTADO TRIAGEM */
+.tri-resultado{padding:20px 16px;flex:1;overflow-y:auto;}
+.res-card{border-radius:20px;padding:22px 18px;margin-bottom:14px;text-align:center;}
+.res-card.urgente{background:linear-gradient(135deg,#fdecea,#ffd5d5);border:3px solid var(--vm);}
+.res-card.atenção{background:linear-gradient(135deg,#fff8e1,#fff3cd);border:3px solid var(--am);}
+.res-card.casa{background:linear-gradient(135deg,#e8f5ee,#d4edd9);border:3px solid var(--g4);}
+.res-ico{font-size:3.5rem;display:block;margin-bottom:10px;}
+.res-card h3{font-family:'Georgia',serif;font-size:1.5rem;margin-bottom:8px;}
+.res-card p{font-size:0.84rem;line-height:1.6;}
+.res-sintomas{background:rgba(0,0,0,0.05);border-radius:11px;padding:12px;margin-top:14px;text-align:left;}
+.res-sintomas h4{font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+.res-sintomas li{font-size:0.8rem;padding:3px 0;list-style:none;padding-left:18px;position:relative;}
+.res-sintomas li::before{content:'→';position:absolute;left:0;font-weight:800;}
+.btn-urgente{display:block;width:100%;padding:14px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,var(--vm),#e53030);color:#fff;font-family:system-ui,-apple-system,sans-serif;
+  font-size:1.05rem;font-weight:800;cursor:pointer;text-decoration:none;text-align:center;margin-top:12px;}
+.btn-voltar{width:100%;padding:12px;border:2px solid var(--cinza3);border-radius:13px;background:none;
+  font-family:system-ui,-apple-system,sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:8px;color:var(--cinza);}
+
+/* FORMS */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.btn-save{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--g1),var(--g3));
+  color:#fff;font-family:system-ui,-apple-system,sans-serif;font-size:0.9rem;font-weight:800;cursor:pointer;transition:all .2s;margin-top:5px;}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(10,74,36,0.25);}
+.ro{flex:1;min-width:65px;}
+.ro input{display:none;}
+.ro label{display:block;text-align:center;padding:8px 4px;border:2px solid var(--cinza3);border-radius:9px;font-size:0.74rem;font-weight:700;cursor:pointer;transition:all .2s;color:var(--cinza);}
+.ro input:checked+label{border-color:var(--g4);background:#e8f5ee;color:var(--g1);}
+.radio-group{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px;}
+.stat-box{background:var(--bege2);border-radius:13px;padding:12px;text-align:center;}
+.stat-val{font-family:'Georgia',serif;font-size:1.5rem;color:var(--g1);font-weight:700;line-height:1;}
+.stat-lbl{font-size:0.65rem;color:var(--cinza);margin-top:3px;text-transform:uppercase;letter-spacing:0.04em;}
+.stat-sub{font-size:0.7rem;color:var(--g4);font-weight:700;margin-top:2px;}
+
+.resultado{border-radius:11px;padding:12px 14px;margin-top:9px;font-size:0.85rem;line-height:1.55;display:none;}
+.resultado.verde{background:#e8f5ee;color:#1a5c34;border-left:5px solid var(--g3);}
+.resultado.amarelo{background:#fff8e1;color:#7a5500;border-left:5px solid var(--am);}
+.resultado.vermelho{background:#fdecea;color:#8b1a1a;border-left:5px solid var(--vm);}
+
+/* VACINAS */
+.vi{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;margin-bottom:6px;border:2px solid var(--cinza3);transition:all .2s;cursor:pointer;}
+.vi.feita{background:#e8f5ee;border-color:#a8d8b8;}
+.vi.pendente{background:#fff8e1;border-color:#f5c842;}
+.vi.atrasada{background:#fdecea;border-color:#f5a0a0;}
+.vi-info h4{font-size:0.82rem;font-weight:700;}
+.vi-info p{font-size:0.7rem;color:var(--cinza);}
+.vbadge{margin-left:auto;padding:3px 8px;border-radius:16px;font-size:0.65rem;font-weight:800;flex-shrink:0;}
+
+/* MED */
+.med-card{border:2px solid var(--cinza3);border-radius:12px;padding:12px;margin-bottom:8px;position:relative;}
+.med-horas{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.med-hora{background:var(--bege2);padding:3px 8px;border-radius:6px;font-size:0.72rem;font-weight:700;color:var(--g1);}
+.del-btn{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:0.9rem;color:var(--cinza2);}
+
+/* CONSULTAS */
+.cons-item{border-left:4px solid var(--g4);padding:10px 12px;background:var(--bege2);border-radius:0 10px 10px 0;margin-bottom:8px;}
+
+/* RECEITA */
+.receita-card{border-radius:13px;overflow:hidden;margin-bottom:11px;box-shadow:var(--sh);}
+.rec-hdr{padding:12px 14px;font-weight:800;font-size:0.88rem;display:flex;align-items:center;gap:7px;}
+.rec-body{padding:12px 14px;background:#fff;}
 
 /* ALARME POPUP */
-.alarme-popup{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,var(--verde),var(--verde2));
-  color:#fff;padding:16px 20px;z-index:400;display:none;animation:slideDown .4s ease;}
-@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
-.alarme-popup.show{display:block;}
-.alarme-popup h3{font-size:1rem;font-weight:700;}
-.alarme-popup p{font-size:0.82rem;opacity:0.9;margin-top:2px;}
-.alarme-popup-close{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;}
+.ap{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,var(--g1),var(--g3));
+  color:#fff;padding:13px 16px;z-index:500;display:none;animation:sd .4s ease;}
+@keyframes sd{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.ap.show{display:flex;align-items:center;gap:9px;}
 
-/* DISCLAIMER */
-.disclaimer{background:#fff3e0;border-radius:12px;padding:12px 14px;font-size:0.76rem;color:#7a5500;border-left:4px solid var(--laranja);margin-top:8px;}
+/* PAYSUITE */
+.pay-card{background:linear-gradient(135deg,#e8f5ee,#d4edd9);border-radius:16px;padding:18px;border:2px solid var(--g4);margin-bottom:13px;}
+.pay-card h3{font-family:'Georgia',serif;color:var(--g1);font-size:1.1rem;margin-bottom:8px;}
+.pay-card p{font-size:0.82rem;color:var(--cinza);line-height:1.5;}
+.pay-btn{display:inline-block;margin-top:12px;padding:11px 20px;background:linear-gradient(135deg,var(--g1),var(--g3));
+  color:#fff;border-radius:11px;font-weight:800;font-size:0.88rem;text-decoration:none;border:none;cursor:pointer;font-family:system-ui,-apple-system,sans-serif;}
 
-/* EMPTY STATE */
-.empty{text-align:center;padding:28px 16px;color:var(--cinza);}
-.empty .ico{font-size:2.5rem;display:block;margin-bottom:8px;}
-.empty p{font-size:0.88rem;}
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) scale(0.9);background:#1a1a1a;
+  color:#fff;padding:10px 16px;border-radius:11px;font-size:0.8rem;font-weight:700;z-index:600;
+  opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) scale(1);}
 
-canvas{max-width:100%;border-radius:10px;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:400;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:22px 22px 0 0;padding:22px 18px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+.modal-handle{width:34px;height:4px;background:var(--cinza3);border-radius:2px;margin:0 auto 14px;}
+.modal h3{font-family:'Georgia',serif;font-size:1.15rem;color:var(--g1);margin-bottom:14px;}
+.modal-close{float:right;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--cinza);margin-top:-2px;}
+
+.empty{text-align:center;padding:22px 12px;color:var(--cinza);}
+.empty .ico{font-size:2rem;display:block;margin-bottom:5px;}
+.empty p{font-size:0.82rem;}
+.disclaimer{background:#fff3e0;border-radius:10px;padding:10px 12px;font-size:0.73rem;color:#7a5500;border-left:4px solid var(--am);margin-top:7px;}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font-size:0.68rem;font-weight:800;}
+canvas{max-width:100%;border-radius:9px;}
+
+/* AGUA */
+.agua-box{background:linear-gradient(135deg,#e3f0fb,#d0e4f5);border-radius:13px;padding:13px;
+  display:flex;align-items:center;gap:11px;margin-bottom:13px;border:2px solid #a8c8e8;}
+.agua-box p{font-size:0.8rem;color:#1a4a7a;line-height:1.4;}
+
+/* TRIAL WARNING */
+.trial-warn{background:linear-gradient(135deg,#fff8e1,#fff3cd);border:2px solid var(--am);border-radius:14px;padding:14px;margin-bottom:13px;}
+.trial-warn h4{font-size:0.9rem;font-weight:800;color:#7a5500;margin-bottom:4px;}
+.trial-warn p{font-size:0.78rem;color:#7a5500;line-height:1.4;}
 </style>
 </head>
 <body>
 
-<!-- ===== AUTH ===== -->
+<!-- LOADING -->
+<div id="loading">
+  <span class="ld-ico">🌿</span>
+  <h2>Bebé Saudável</h2>
+  <p>MOÇAMBIQUE · A CARREGAR...</p>
+</div>
+
+<!-- AUTH -->
 <div id="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo">
-      <span class="ico">🌿</span>
+  <div class="abox">
+    <div class="alogo">
+      <span>🌿</span>
       <h1>Bebé Saudável</h1>
       <p>Cuidar com amor · Moçambique 🇲🇿</p>
     </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuth('login')">Entrar</button>
-      <button class="auth-tab" onclick="switchAuth('registo')">Criar Conta</button>
+    <div class="trial-badge">
+      🎁 Experimenta GRÁTIS durante
+      <span>7 DIAS</span>
+      Depois apenas 500 MZN/ano
     </div>
+    <div class="atabs">
+      <button class="atab active" onclick="swAuth('login')" id="tab-l">Entrar</button>
+      <button class="atab" onclick="swAuth('reg')" id="tab-r">Criar Conta</button>
+    </div>
+    <div class="aerr" id="aerr"></div>
+
     <!-- LOGIN -->
-    <div class="auth-form active" id="form-login">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="o-teu@email.com">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="login-pass" placeholder="••••••••">
-      </div>
-      <button class="btn-primary" onclick="fazerLogin()">Entrar →</button>
+    <div class="aform active" id="form-l">
+      <div class="fg"><label>Email</label><input type="email" id="li-e" placeholder="email@exemplo.com"></div>
+      <div class="fg"><label>Password</label><input type="password" id="li-p" placeholder="••••••••"></div>
+      <button class="btn-p" id="btn-li" onclick="fazerLogin()">Entrar →</button>
+      <p style="text-align:center;font-size:0.74rem;color:var(--cinza);margin-top:10px">
+        <strong>Modo demo:</strong> se Firebase não estiver configurado, qualquer email/password funciona para testar.
+      </p>
     </div>
+
     <!-- REGISTO -->
-    <div class="auth-form" id="form-registo">
-      <div class="form-group">
-        <label>O teu nome</label>
-        <input type="text" id="reg-nome" placeholder="Ex: Ana Maria">
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="reg-email" placeholder="o-teu@email.com">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
-      </div>
-      <div class="form-group">
-        <label>Confirmar Password</label>
-        <input type="password" id="reg-pass2" placeholder="Repete a password">
-      </div>
-      <button class="btn-primary" onclick="fazerRegisto()">Criar Conta →</button>
+    <div class="aform" id="form-reg">
+      <div class="fg"><label>Nome completo</label><input type="text" id="rg-n" placeholder="Ana Maria Nicky"></div>
+      <div class="fg"><label>Email</label><input type="email" id="rg-e" placeholder="email@exemplo.com"></div>
+      <div class="fg"><label>Telefone (M-Pesa)</label><input type="tel" id="rg-t" placeholder="84 123 4567"></div>
+      <div class="fg"><label>Password</label><input type="password" id="rg-p" placeholder="Mínimo 6 caracteres"></div>
+      <p style="font-size:0.74rem;color:var(--cinza);margin-bottom:8px;line-height:1.5">
+        ✅ 7 dias grátis → depois 500 MZN/ano<br>
+        O pagamento é feito após o período de teste.
+      </p>
+      <button class="btn-p" id="btn-rg" onclick="fazerRegisto()">Começar os 7 Dias Grátis →</button>
     </div>
   </div>
 </div>
 
 <!-- ===== APP ===== -->
 <div id="app-screen">
-  <header>
-    <div class="header-top">
-      <div>
-        <h1>🌿 Bebé Saudável</h1>
-        <p id="header-user">Olá, Mãe!</p>
-      </div>
-      <div class="user-info">
-        <div class="avatar" id="user-avatar">👩</div>
-        <button class="logout-btn" onclick="fazerLogout()">Sair</button>
-      </div>
+  <!-- HEADER -->
+  <div class="app-header">
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="hdr-info">
+      <h1>🌿 Bebé Saudável</h1>
+      <p id="hdr-sub">Moçambique</p>
     </div>
-    <div class="bebe-bar" id="bebe-bar">
-      <div class="bebe-chip-add" onclick="abrirModalBebe()">➕ Adicionar bebé</div>
+    <div class="hdr-right">
+      <span class="trial-hdr" id="trial-hdr">⏳ 7 dias grátis</span>
+      <div class="avatar" id="user-av">M</div>
     </div>
-    <nav id="main-nav">
-      <button class="active" onclick="showSection('inicio')">🏠 Início</button>
-      <button onclick="showSection('gestacao')">🤰 Gestação</button>
-      <button onclick="showSection('perinatal')">👶 Perinatal</button>
-      <button onclick="showSection('crescimento')">📏 Crescimento</button>
-      <button onclick="showSection('vacinas')">💉 Vacinas</button>
-      <button onclick="showSection('medicacao')">💊 Medicação</button>
-      <button onclick="showSection('pediatras')">👨‍⚕️ Pediatras</button>
-    </nav>
-  </header>
+  </div>
 
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sb-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <h2>🌿 Bebé Saudável</h2>
+      <p id="sb-nome">Olá, Manuela!</p>
+    </div>
+    <!-- BEBÉS -->
+    <div class="sb-bebe">
+      <p>Os meus bebés</p>
+      <div class="bebe-chips" id="sb-bebes"></div>
+      <div class="bchip-add" onclick="abrirModal('modal-bebe');toggleSidebar()">➕ Adicionar bebé</div>
+    </div>
+    <!-- NAV -->
+    <div class="sb-nav">
+      <div class="sb-section">Principal</div>
+      <button class="sb-btn active" onclick="showSec('inicio');toggleSidebar()"><span class="sb-ico" style="background:#1a5c3420">🏠</span>Início</button>
+      <button class="sb-btn" onclick="showTri();toggleSidebar()"><span class="sb-ico" style="background:#ff333320">🩺</span>Como está o bebé?</button>
+
+      <div class="sb-section">Saúde</div>
+      <button class="sb-btn" onclick="showSec('gestacao');toggleSidebar()"><span class="sb-ico" style="background:#fce4ec50">🤰</span>Gestação</button>
+      <button class="sb-btn" onclick="showSec('perinatal');toggleSidebar()"><span class="sb-ico" style="background:#e3f0fb50">👶</span>Perinatal</button>
+      <button class="sb-btn" onclick="showSec('crescimento');toggleSidebar()"><span class="sb-ico" style="background:#e8f5ee50">📏</span>Crescimento</button>
+      <button class="sb-btn" onclick="showSec('vacinas');toggleSidebar()"><span class="sb-ico" style="background:#fdecea50">💉</span>Vacinas PAV</button>
+      <button class="sb-btn" onclick="showSec('consultas');toggleSidebar()"><span class="sb-ico" style="background:#e3f0fb50">🩺</span>Consultas</button>
+      <button class="sb-btn" onclick="showSec('medicacao');toggleSidebar()"><span class="sb-ico" style="background:#fff8e150">💊</span>Medicação</button>
+
+      <div class="sb-section">Nutrição</div>
+      <button class="sb-btn" onclick="showSec('alimentacao');toggleSidebar()"><span class="sb-ico" style="background:#e8f5ee50">🥗</span>Alimentação</button>
+
+      <div class="sb-section">Localização</div>
+      <button class="sb-btn" onclick="showSec('mapa');toggleSidebar()"><span class="sb-ico" style="background:#e3f0fb50">📍</span>Saúde Próxima</button>
+      <button class="sb-btn" onclick="showSec('pediatras');toggleSidebar()"><span class="sb-ico" style="background:#e8f5ee50">👨‍⚕️</span>Pediatras</button>
+
+      <div class="sb-section">Conta</div>
+      <button class="sb-btn" onclick="showSec('pagamento');toggleSidebar()"><span class="sb-ico" style="background:#fff8e150">💳</span>Pagamento / Plano</button>
+    </div>
+    <div class="sb-footer">
+      <button class="sb-logout" onclick="fazerLogout()">🚪 Sair da conta</button>
+    </div>
+  </div>
+
+  <!-- TRIAGEM (OVERLAY) -->
+  <div class="triagem-screen" id="triagem-screen" style="display:none;">
+    <div class="tri-header">
+      <h2>🩺 Como está o bebé?</h2>
+      <p>Responde às perguntas para te aconselharmos</p>
+      <div class="tri-progress"><div class="tri-bar" id="tri-bar" style="width:0%"></div></div>
+    </div>
+    <div class="tri-body" id="tri-body"></div>
+    <div class="tri-footer" id="tri-footer">
+      <button class="btn-tri" id="btn-tri-next" onclick="triNext()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
   <main>
 
     <!-- INÍCIO -->
     <div class="section active" id="sec-inicio">
-      <div class="card" id="card-boas-vindas">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e8f5ee">🌱</div>
-          <h2>Bem-vinda!</h2>
+      <div id="trial-warn-box" style="display:none">
+        <div class="trial-warn">
+          <h4>⏳ Período de teste</h4>
+          <p>Tens <strong id="dias-restantes">7</strong> dias grátis. Após este período, activa por 500 MZN/ano para continuar a usar o app.</p>
+          <button class="btn-save" style="margin-top:10px" onclick="showSec('pagamento')">💳 Activar Agora</button>
         </div>
-        <p style="font-size:0.88rem;color:var(--cinza);line-height:1.6" id="txt-boas-vindas">
-          Adiciona o teu bebé para começar a acompanhar o seu desenvolvimento.
-        </p>
-        <button class="btn-save" style="margin-top:14px" onclick="abrirModalBebe()">➕ Adicionar Bebé</button>
       </div>
-      <div id="resumo-bebe" style="display:none">
-        <div class="stat-grid" id="stats-bebe"></div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-ico" style="background:#fff8e1">⏰</div>
-            <h2>Próximos Alarmes</h2>
-          </div>
-          <div id="proximos-alarmes">
-            <div class="empty"><span class="ico">😴</span><p>Sem alarmes activos</p></div>
+      <div id="agua-box" style="display:none">
+        <div class="agua-box"><span style="font-size:1.8rem">💧</span>
+          <p><strong>Hora de beber água!</strong><br>O teu bebé tem mais de 6 meses. Oferece água ao longo do dia.</p>
+        </div>
+      </div>
+      <!-- BOTÃO TRIAGEM DESTAQUE -->
+      <div class="card" style="background:linear-gradient(135deg,#fdecea,#ffd5d5);border:2px solid var(--vm)">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:2.5rem">🩺</span>
+          <div>
+            <h3 style="font-family:'Georgia',serif;color:var(--vm);font-size:1.05rem">Como está o teu bebé hoje?</h3>
+            <p style="font-size:0.78rem;color:#8b1a1a;margin-top:2px">Toca aqui para avaliar os sintomas</p>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-ico" style="background:#fdecea">💉</div>
-            <h2>Próximas Vacinas</h2>
-          </div>
-          <div id="proximas-vacinas-resumo"></div>
-        </div>
+        <button class="btn-save" style="background:linear-gradient(135deg,var(--vm),#e53030);margin-top:12px" onclick="showTri()">
+          🩺 Avaliar Sintomas Agora
+        </button>
+      </div>
+      <div class="card" id="card-bem">
+        <div class="card-hdr"><div class="cico" style="background:#e8f5ee">🌱</div><h2>Bem-vinda!</h2></div>
+        <p style="font-size:0.84rem;color:var(--cinza);line-height:1.6">Adiciona o teu bebé para começar a acompanhar o desenvolvimento.</p>
+        <button class="btn-save" style="margin-top:11px" onclick="abrirModal('modal-bebe')">➕ Adicionar Bebé</button>
+      </div>
+      <div id="resumo" style="display:none">
+        <div class="stat-grid" id="stats"></div>
+        <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">⏰</div><h2>Próximos Alarmes</h2></div><div id="al-ini"></div></div>
+        <div class="card"><div class="card-hdr"><div class="cico" style="background:#fdecea">💉</div><h2>Vacinas Pendentes</h2></div><div id="vac-ini"></div></div>
       </div>
     </div>
 
     <!-- GESTAÇÃO -->
     <div class="section" id="sec-gestacao">
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#fce4ec">🤰</div>
-          <h2>Dados da Gestação</h2>
-        </div>
+        <div class="card-hdr"><div class="cico" style="background:#fce4ec">🤰</div><h2>Dados da Gestação</h2></div>
         <div class="row2">
-          <div class="fg">
-            <label>Duração (semanas)</label>
-            <input type="number" id="g-semanas" placeholder="Ex: 39" min="20" max="45">
-          </div>
-          <div class="fg">
-            <label>Nº de consultas pré-natal</label>
-            <input type="number" id="g-consultas" placeholder="Ex: 6" min="0">
-          </div>
+          <div class="fg"><label>Duração (semanas)</label><input type="number" id="g-sem" placeholder="39" min="20" max="45"></div>
+          <div class="fg"><label>Nº consultas pré-natal</label><input type="number" id="g-con" placeholder="6"></div>
         </div>
-        <div class="fg">
-          <label>Tipo de gravidez</label>
+        <div class="fg"><label>Tipo de gravidez</label>
           <div class="radio-group">
-            <div class="radio-opt"><input type="radio" name="g-tipo" id="g-normal" value="normal"><label for="g-normal">🟢 Normal</label></div>
-            <div class="radio-opt"><input type="radio" name="g-tipo" id="g-risco" value="risco"><label for="g-risco">🔴 Alto Risco</label></div>
-            <div class="radio-opt"><input type="radio" name="g-tipo" id="g-gemelar" value="gemelar"><label for="g-gemelar">👥 Gemelar</label></div>
+            <div class="ro"><input type="radio" name="gt" id="gt1" value="normal"><label for="gt1">🟢 Normal</label></div>
+            <div class="ro"><input type="radio" name="gt" id="gt2" value="risco"><label for="gt2">🔴 Alto Risco</label></div>
+            <div class="ro"><input type="radio" name="gt" id="gt3" value="gemelar"><label for="gt3">👥 Gemelar</label></div>
           </div>
         </div>
-        <div class="fg">
-          <label>Observações</label>
-          <textarea id="g-obs" placeholder="Ex: Hipertensão, diabetes gestacional, medicação..."></textarea>
-        </div>
-        <button class="btn-save" onclick="salvarGestacao()">💾 Guardar Gestação</button>
+        <div class="fg"><label>Observações</label><textarea id="g-obs" placeholder="Medicação, intercorrências..." style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;font-size:0.88rem;min-height:70px;resize:vertical;"></textarea></div>
+        <button class="btn-save" onclick="salvarGestacao()">💾 Guardar</button>
       </div>
     </div>
 
     <!-- PERINATAL -->
     <div class="section" id="sec-perinatal">
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e3f0fb">👶</div>
-          <h2>Dados Perinatais</h2>
-        </div>
+        <div class="card-hdr"><div class="cico" style="background:#e3f0fb">👶</div><h2>Dados Perinatais</h2></div>
         <div class="row2">
-          <div class="fg">
-            <label>Data de nascimento</label>
-            <input type="date" id="p-datanascimento">
-          </div>
-          <div class="fg">
-            <label>Hora de nascimento</label>
-            <input type="time" id="p-hora">
-          </div>
+          <div class="fg"><label>Data de nascimento</label><input type="date" id="p-dn"></div>
+          <div class="fg"><label>Hora</label><input type="time" id="p-hora"></div>
         </div>
         <div class="row3">
-          <div class="fg">
-            <label>Peso (kg)</label>
-            <input type="number" id="p-peso" step="0.01" placeholder="Ex: 3.25">
-          </div>
-          <div class="fg">
-            <label>Comprimento (cm)</label>
-            <input type="number" id="p-comprimento" step="0.1" placeholder="Ex: 50">
-          </div>
-          <div class="fg">
-            <label>Per. Craniano (cm)</label>
-            <input type="number" id="p-cranio" step="0.1" placeholder="Ex: 34">
-          </div>
+          <div class="fg"><label>Peso (kg)</label><input type="number" id="p-p" step="0.01" placeholder="3.25"></div>
+          <div class="fg"><label>Comprimento (cm)</label><input type="number" id="p-c" step="0.1" placeholder="50"></div>
+          <div class="fg"><label>Per. Craniano (cm)</label><input type="number" id="p-cr" step="0.1" placeholder="34"></div>
         </div>
         <div class="row2">
-          <div class="fg">
-            <label>Idade gestacional (sem.)</label>
-            <input type="number" id="p-ig" placeholder="Ex: 39" min="20" max="45">
-          </div>
-          <div class="fg">
-            <label>Local de parto</label>
-            <select id="p-local">
-              <option value="">Seleccionar</option>
-              <option value="maternidade">🏥 Maternidade</option>
-              <option value="casa">🏠 Em casa</option>
-              <option value="caminho">🚗 A caminho</option>
-              <option value="outro">📍 Outro</option>
-            </select>
+          <div class="fg"><label>Idade gestacional (sem.)</label><input type="number" id="p-ig" placeholder="39"></div>
+          <div class="fg"><label>Local de parto</label>
+            <select id="p-loc" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;"><option value="">Seleccionar</option><option value="maternidade">🏥 Maternidade</option><option value="casa">🏠 Em casa</option><option value="caminho">🚗 A caminho</option></select>
           </div>
         </div>
-        <div class="fg">
-          <label>Tipo de parto</label>
+        <div class="fg"><label>Tipo de parto</label>
           <div class="radio-group">
-            <div class="radio-opt"><input type="radio" name="p-tipoparto" id="pt-normal" value="normal"><label for="pt-normal">Natural</label></div>
-            <div class="radio-opt"><input type="radio" name="p-tipoparto" id="pt-cesar" value="cesariana"><label for="pt-cesar">Cesária</label></div>
-            <div class="radio-opt"><input type="radio" name="p-tipoparto" id="pt-pelvico" value="pelvico"><label for="pt-pelvico">Pélvico</label></div>
-            <div class="radio-opt"><input type="radio" name="p-tipoparto" id="pt-ventosa" value="ventosa"><label for="pt-ventosa">Ventosa</label></div>
+            <div class="ro"><input type="radio" name="pp" id="pp1" value="normal"><label for="pp1">Natural</label></div>
+            <div class="ro"><input type="radio" name="pp" id="pp2" value="cesariana"><label for="pp2">Cesária</label></div>
+            <div class="ro"><input type="radio" name="pp" id="pp3" value="pelvico"><label for="pp3">Pélvico</label></div>
+            <div class="ro"><input type="radio" name="pp" id="pp4" value="ventosa"><label for="pp4">Ventosa</label></div>
           </div>
         </div>
-        <div class="fg">
-          <label>Causa (se não foi parto normal)</label>
-          <input type="text" id="p-causa" placeholder="Ex: Sofrimento fetal, apresentação pélvica...">
-        </div>
-        <div class="row2">
-          <div class="fg">
-            <label>Índice Apgar 1 min</label>
-            <input type="number" id="p-apgar1" min="0" max="10" placeholder="0-10">
-          </div>
-          <div class="fg">
-            <label>Índice Apgar 5 min</label>
-            <input type="number" id="p-apgar5" min="0" max="10" placeholder="0-10">
-          </div>
-        </div>
-        <div class="fg">
-          <label>Reanimação necessária?</label>
+        <div class="fg"><label>Aleitamento</label>
           <div class="radio-group">
-            <div class="radio-opt"><input type="radio" name="p-reanim" id="pr-nao" value="nao"><label for="pr-nao">✅ Não</label></div>
-            <div class="radio-opt"><input type="radio" name="p-reanim" id="pr-sim" value="sim"><label for="pr-sim">⚠️ Sim</label></div>
+            <div class="ro"><input type="radio" name="pal" id="pa1" value="peito" onchange="chkFormula()"><label for="pa1">🤱 Peito</label></div>
+            <div class="ro"><input type="radio" name="pal" id="pa2" value="formula" onchange="chkFormula()"><label for="pa2">🍼 Fórmula</label></div>
+            <div class="ro"><input type="radio" name="pal" id="pa3" value="misto" onchange="chkFormula()"><label for="pa3">🔀 Misto</label></div>
           </div>
         </div>
-        <div class="fg">
-          <label>Rastreio metabólico (teste do pezinho)?</label>
-          <div class="radio-group">
-            <div class="radio-opt"><input type="radio" name="p-pezinho" id="pp-sim" value="sim"><label for="pp-sim">✅ Realizado</label></div>
-            <div class="radio-opt"><input type="radio" name="p-pezinho" id="pp-nao" value="nao"><label for="pp-nao">❌ Não realizado</label></div>
-            <div class="radio-opt"><input type="radio" name="p-pezinho" id="pp-pen" value="pendente"><label for="pp-pen">⏳ Pendente</label></div>
-          </div>
-        </div>
-        <div class="fg">
-          <label>Observações</label>
-          <textarea id="p-obs" placeholder="Outras informações relevantes do nascimento..."></textarea>
-        </div>
-        <button class="btn-save" onclick="salvarPerinatal()">💾 Guardar Dados Perinatais</button>
+        <div id="formula-box" style="display:none" class="fg"><label>Qual fórmula?</label><input type="text" id="p-f" placeholder="Ex: NAN, Aptamil, Nestogeno..."></div>
+        <div class="fg"><label>Apgar 1 min</label><input type="number" id="p-ap1" min="0" max="10" placeholder="0-10"></div>
+        <div class="fg"><label>Observações</label><textarea id="p-obs" placeholder="Outras informações..." style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;font-size:0.88rem;min-height:60px;resize:vertical;"></textarea></div>
+        <button class="btn-save" onclick="salvarPerinatal()">💾 Guardar</button>
       </div>
     </div>
 
     <!-- CRESCIMENTO -->
     <div class="section" id="sec-crescimento">
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e8f5ee">📏</div>
-          <h2>Registo de Crescimento</h2>
-        </div>
+        <div class="card-hdr"><div class="cico" style="background:#e8f5ee">📏</div><h2>Registo de Crescimento</h2></div>
         <div class="row3">
-          <div class="fg">
-            <label>Peso (kg)</label>
-            <input type="number" id="c-peso" step="0.1" placeholder="Ex: 7.5">
-          </div>
-          <div class="fg">
-            <label>Altura (cm)</label>
-            <input type="number" id="c-altura" step="0.1" placeholder="Ex: 68">
-          </div>
-          <div class="fg">
-            <label>Per. Cran. (cm)</label>
-            <input type="number" id="c-cranio" step="0.1" placeholder="Ex: 43">
-          </div>
+          <div class="fg"><label>Peso (kg)</label><input type="number" id="c-p" step="0.1" placeholder="7.5"></div>
+          <div class="fg"><label>Altura (cm)</label><input type="number" id="c-a" step="0.1" placeholder="68"></div>
+          <div class="fg"><label>Per. Cran.</label><input type="number" id="c-c" step="0.1" placeholder="43"></div>
         </div>
-        <button class="btn-save" onclick="avaliarCrescimento()">📊 Avaliar</button>
-        <div class="resultado" id="res-crescimento"></div>
+        <button class="btn-save" onclick="avalCresc()">📊 Avaliar</button>
+        <div class="resultado" id="res-cresc"></div>
       </div>
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e3f0fb">📈</div>
-          <h2>Curva de Crescimento (OMS)</h2>
-        </div>
-        <canvas id="curvaCanvas" width="440" height="200"></canvas>
+        <div class="card-hdr"><div class="cico" style="background:#e3f0fb">📈</div><h2>Curva de Crescimento (OMS)</h2></div>
+        <canvas id="cv" width="440" height="200"></canvas>
+        <p style="font-size:0.7rem;color:var(--cinza);margin-top:5px;text-align:center">● Dourado = os teus registos · Verde = intervalo OMS normal</p>
       </div>
     </div>
 
     <!-- VACINAS -->
     <div class="section" id="sec-vacinas">
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#fdecea">💉</div>
-          <h2>Calendário Nacional de Vacinação</h2>
-        </div>
-        <p style="font-size:0.8rem;color:var(--cinza);margin-bottom:14px">Calendário oficial de Moçambique — PAV (Programa Alargado de Vacinação)</p>
-        <div id="lista-vacinas"></div>
+        <div class="card-hdr"><div class="cico" style="background:#fdecea">💉</div><h2>Calendário PAV — UNICEF Moçambique</h2></div>
+        <p style="font-size:0.76rem;color:var(--cinza);margin-bottom:11px">Toca para marcar como feita ✅</p>
+        <div id="lista-v"></div>
       </div>
-      <div class="disclaimer">⚠️ Calendário baseado no PAV de Moçambique. Confirma sempre com o teu centro de saúde.</div>
+      <div class="disclaimer">⚠️ Baseado no PAV/UNICEF Moçambique 2024. Confirma sempre no centro de saúde.</div>
+    </div>
+
+    <!-- CONSULTAS -->
+    <div class="section" id="sec-consultas">
+      <div class="card">
+        <div class="card-hdr"><div class="cico" style="background:#e3f0fb">🩺</div><h2>Registar Consulta</h2></div>
+        <div class="row2">
+          <div class="fg"><label>Data</label><input type="date" id="co-d"></div>
+          <div class="fg"><label>Médico / Unidade</label><input type="text" id="co-m" placeholder="Dra. Ana, HCM"></div>
+        </div>
+        <div class="row3">
+          <div class="fg"><label>Peso (kg)</label><input type="number" id="co-p" step="0.1"></div>
+          <div class="fg"><label>Altura (cm)</label><input type="number" id="co-a" step="0.1"></div>
+          <div class="fg"><label>Temp (°C)</label><input type="number" id="co-t" step="0.1"></div>
+        </div>
+        <div class="fg"><label>Observações / Diagnóstico</label><textarea id="co-obs" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;min-height:65px;resize:vertical;"></textarea></div>
+        <div class="fg"><label>Receita médica</label><textarea id="co-rec" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;min-height:65px;resize:vertical;" placeholder="Ex: Paracetamol 5ml 3x/dia..."></textarea></div>
+        <button class="btn-save" onclick="salvarCons()">💾 Guardar</button>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="cico" style="background:#e8f5ee">📋</div><h2>Histórico</h2></div>
+        <div id="lista-cons"></div>
+      </div>
+    </div>
+
+    <!-- ALIMENTAÇÃO -->
+    <div class="section" id="sec-alimentacao">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">🥗</div><h2>Guia de Introdução Alimentar</h2></div><div id="guia-alim"></div></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">👨‍🍳</div><h2>Receitas Saudáveis</h2></div><div id="lista-rec"></div></div>
     </div>
 
     <!-- MEDICAÇÃO -->
     <div class="section" id="sec-medicacao">
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#fff8e1">💊</div>
-          <h2>Receita Médica</h2>
-        </div>
-        <div class="fg">
-          <label>Nome do medicamento</label>
-          <input type="text" id="med-nome" placeholder="Ex: Paracetamol, Amoxicilina...">
-        </div>
+        <div class="card-hdr"><div class="cico" style="background:#fff8e1">💊</div><h2>Adicionar Medicamento</h2></div>
+        <div class="fg"><label>Nome</label><input type="text" id="m-n" placeholder="Ex: Paracetamol"></div>
         <div class="row2">
-          <div class="fg">
-            <label>Dosagem</label>
-            <input type="text" id="med-dose" placeholder="Ex: 5ml, 250mg">
-          </div>
-          <div class="fg">
-            <label>Duração (dias)</label>
-            <input type="number" id="med-dias" placeholder="Ex: 7">
-          </div>
+          <div class="fg"><label>Dosagem</label><input type="text" id="m-d" placeholder="5ml"></div>
+          <div class="fg"><label>Duração (dias)</label><input type="number" id="m-di" placeholder="7"></div>
         </div>
-        <div class="fg">
-          <label>Horários de toma (separados por vírgula)</label>
-          <input type="text" id="med-horarios" placeholder="Ex: 08:00, 14:00, 20:00">
-        </div>
-        <div class="fg">
-          <label>Observações / instruções</label>
-          <textarea id="med-obs" placeholder="Ex: Tomar com leite, antes das refeições..."></textarea>
-        </div>
-        <button class="btn-save" onclick="adicionarMedicamento()">➕ Adicionar Medicamento</button>
+        <div class="fg"><label>Horários (separados por vírgula)</label><input type="text" id="m-h" placeholder="08:00, 14:00, 20:00"></div>
+        <div class="fg"><label>Notas</label><input type="text" id="m-o" placeholder="Tomar com leite..."></div>
+        <button class="btn-save" onclick="addMed()">🔔 Adicionar + Alarme</button>
+      </div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e3f0fb">📋</div><h2>Medicamentos Activos</h2></div><div id="lista-m"></div></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">🔔</div><h2>Alarmes</h2></div><div id="lista-al"></div></div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="section" id="sec-mapa">
+      <div class="card">
+        <div class="card-hdr"><div class="cico" style="background:#e8f5ee">📍</div><h2>Unidades de Saúde Próximas</h2></div>
+        <button class="btn-save" onclick="pedirLoc()" id="btn-loc">📍 Encontrar Unidades Próximas</button>
+        <p id="loc-st" style="margin-top:8px;font-size:0.78rem;color:var(--cinza);text-align:center"></p>
+        <div id="lista-uni" style="margin-top:11px"></div>
       </div>
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e3f0fb">📋</div>
-          <h2>Medicamentos Activos</h2>
-        </div>
-        <div id="lista-medicamentos">
-          <div class="empty"><span class="ico">💊</span><p>Sem medicamentos registados</p></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e8f5ee">🔔</div>
-          <h2>Alarmes Activos</h2>
-        </div>
-        <div id="lista-alarmes">
-          <div class="empty"><span class="ico">🔕</span><p>Sem alarmes activos</p></div>
+        <div class="card-hdr"><div class="cico" style="background:#fdecea">🚨</div><h2>Emergência — MISAU</h2></div>
+        <div style="background:#fdecea;border-radius:12px;padding:16px;text-align:center">
+          <p style="font-size:0.8rem;color:#8b1a1a;font-weight:700">Linha Verde MISAU — Gratuita 24h</p>
+          <a href="tel:1499" style="font-size:2.2rem;font-weight:800;color:var(--vm);text-decoration:none;display:block;margin:6px 0">📞 1499</a>
+          <p style="font-size:0.72rem;color:var(--cinza)">Ministério da Saúde de Moçambique</p>
         </div>
       </div>
     </div>
 
     <!-- PEDIATRAS -->
     <div class="section" id="sec-pediatras">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">👨‍⚕️</div><h2>Pediatras em Moçambique</h2></div><div id="lista-ped"></div></div>
+    </div>
+
+    <!-- PAGAMENTO / PLANO -->
+    <div class="section" id="sec-pagamento">
+      <div class="pay-card">
+        <h3>💳 O teu Plano</h3>
+        <p id="pay-status">A carregar...</p>
+      </div>
       <div class="card">
-        <div class="card-header">
-          <div class="card-ico" style="background:#e8f5ee">👨‍⚕️</div>
-          <h2>Pediatras em Moçambique</h2>
+        <div class="card-hdr"><div class="cico" style="background:#fff8e1">💳</div><h2>Activar Plano Anual</h2></div>
+        <p style="font-size:0.84rem;color:var(--cinza);margin-bottom:14px;line-height:1.5">
+          Por apenas <strong style="color:var(--g1);font-size:1.1rem">500 MZN/ano</strong> tens acesso completo ao Bebé Saudável para toda a família.
+        </p>
+        <!-- PAYSUITE BUTTON - substitui o href pelo link gerado no Paysuite -->
+        <a href="LINK_PAYSUITE_AQUI" target="_blank" class="pay-btn" style="display:block;text-align:center;margin-bottom:10px">
+          💳 Pagar com Paysuite (M-Pesa / e-Mola)
+        </a>
+        <div style="background:var(--bege2);border-radius:11px;padding:13px;font-size:0.78rem;color:var(--cinza);line-height:1.5">
+          <strong style="color:var(--g1)">ℹ️ Como funciona:</strong><br>
+          1. Clica no botão acima<br>
+          2. Escolhe M-Pesa ou e-Mola<br>
+          3. Confirma o pagamento no telemóvel<br>
+          4. Envia o comprovativo para <strong>📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f7d7a7d7a6c7e6a7b7e697a73317270655f78727e7673317c7072">[email&#160;protected]</a></strong><br>
+          5. A tua conta é activada em até 2 horas ✅
         </div>
-        <div id="lista-pediatras"></div>
-        <div style="background:#fdecea;border-radius:12px;padding:14px;margin-top:4px;font-size:0.82rem;color:#8b1a1a;">
-          🚨 <strong>Urgência 24h:</strong> SAMU <a href="tel:+258821320000" style="color:var(--vermelho);font-weight:700">+258 21 320 000</a>
+        <div style="margin-top:12px;background:#e8f5ee;border-radius:11px;padding:13px;font-size:0.78rem;color:var(--g1)">
+          <strong>📱 Ou paga directamente via M-Pesa:</strong><br>
+          Número: <strong>84 XXX XXXX</strong><br>
+          Referência: <strong id="mpesa-ref-pay">BS-<span id="user-ref">—</span></strong><br>
+          Valor: <strong>500 MZN</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="cico" style="background:#e8f5ee">📋</div><h2>Comparação de Planos</h2></div>
+        <div style="font-size:0.82rem;line-height:1.8;color:var(--cinza)">
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;font-weight:800;color:var(--g1);margin-bottom:8px;font-size:0.76rem">
+            <span>Funcionalidade</span><span>Grátis</span><span>Anual</span>
+          </div>
+          ${[['1 bebé','✅','—'],['3 bebés','—','✅'],['Crescimento','✅','✅'],['Vacinas PAV','✅','✅'],['Consultas','—','✅'],['Receitas','—','✅'],['Medicação + Alarmes','—','✅'],['Mapa de saúde','—','✅'],['Triagem de sintomas','✅','✅']].map(r=>`<div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 0;border-bottom:1px solid var(--cinza3)"><span>${r[0]}</span><span style="text-align:center">${r[1]}</span><span style="text-align:center;color:var(--g1)">${r[2]}</span></div>`).join('')}
         </div>
       </div>
     </div>
@@ -554,619 +719,656 @@ canvas{max-width:100%;border-radius:10px;}
 <!-- MODAL BEBÉ -->
 <div class="modal-overlay" id="modal-bebe">
   <div class="modal">
+    <div class="modal-handle"></div>
     <button class="modal-close" onclick="fecharModal('modal-bebe')">✕</button>
     <h3>👶 Adicionar Bebé</h3>
-    <div class="fg">
-      <label>Nome do bebé</label>
-      <input type="text" id="bebe-nome" placeholder="Ex: Maria Beatriz">
-    </div>
+    <div class="fg"><label>Nome</label><input type="text" id="bn" placeholder="Ex: Maria Beatriz"></div>
     <div class="row2">
-      <div class="fg">
-        <label>Data de nascimento</label>
-        <input type="date" id="bebe-dn">
-      </div>
-      <div class="fg">
-        <label>Sexo</label>
-        <select id="bebe-sexo">
-          <option value="f">👧 Feminino</option>
-          <option value="m">👦 Masculino</option>
-        </select>
-      </div>
+      <div class="fg"><label>Data de nascimento</label><input type="date" id="bdn"></div>
+      <div class="fg"><label>Sexo</label><select id="bsx" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:system-ui,-apple-system,sans-serif;"><option value="f">👧 Feminino</option><option value="m">👦 Masculino</option></select></div>
     </div>
-    <button class="btn-save" onclick="adicionarBebe()">✅ Adicionar</button>
+    <button class="btn-save" onclick="addBebe()">✅ Adicionar</button>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
-
-<!-- ALARME POPUP -->
-<div class="alarme-popup" id="alarme-popup">
-  <div>
-    <h3 id="alarme-titulo">💊 Hora do medicamento!</h3>
-    <p id="alarme-desc">Paracetamol 5ml</p>
-  </div>
-  <button class="alarme-popup-close" onclick="fecharAlarmePopup()">OK ✓</button>
+<div class="ap" id="ap">
+  <span style="font-size:1.5rem">💊</span>
+  <div style="flex:1"><div style="font-size:0.9rem;font-weight:800" id="ap-t">Medicamento!</div><div style="font-size:0.76rem;opacity:0.85" id="ap-d">Hora da toma</div></div>
+  <button style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 11px;border-radius:7px;cursor:pointer;font-size:0.76rem;" onclick="document.getElementById('ap').classList.remove('show')">OK ✓</button>
 </div>
 
-<script>
-// ===== ESTADO =====
-let estadoApp = {
-  utilizadores: JSON.parse(localStorage.getItem('bs_utilizadores')||'{}'),
-  sessao: JSON.parse(localStorage.getItem('bs_sessao')||'null'),
-  bebes: {},
-  bebeActivo: null,
-  alarmes: [],
-  intervaloAlarmes: null
-};
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+let BA=null, D={}, INT_AL=null;
 
 // ===== AUTH =====
-function switchAuth(tipo) {
-  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('form-'+tipo).classList.add('active');
-}
-
-function fazerRegisto() {
-  const nome = document.getElementById('reg-nome').value.trim();
-  const email = document.getElementById('reg-email').value.trim().toLowerCase();
-  const pass = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-  if(!nome||!email||!pass){mostrarToast('❌ Preenche todos os campos');return;}
-  if(pass.length<6){mostrarToast('❌ Password mínimo 6 caracteres');return;}
-  if(pass!==pass2){mostrarToast('❌ Passwords não coincidem');return;}
-  if(estadoApp.utilizadores[email]){mostrarToast('❌ Email já registado');return;}
-  estadoApp.utilizadores[email]={nome,email,pass,bebes:[],dados:{}};
-  localStorage.setItem('bs_utilizadores',JSON.stringify(estadoApp.utilizadores));
-  iniciarSessao(email);
-}
-
-function fazerLogin() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass = document.getElementById('login-pass').value;
-  const u = estadoApp.utilizadores[email];
-  if(!u||u.pass!==pass){mostrarToast('❌ Email ou password incorrectos');return;}
-  iniciarSessao(email);
-}
-
-function iniciarSessao(email) {
-  estadoApp.sessao = email;
-  localStorage.setItem('bs_sessao',JSON.stringify(email));
+function mostrarApp(){
+  D=window._D||JSON.parse(localStorage.getItem('bs_d')||'{}');
+  if(!D.bebes)D.bebes=[];if(!D.dados)D.dados={};if(!D.plano)D.plano='trial';
+  if(!D.trialInicio)D.trialInicio=new Date().toISOString();
+  document.getElementById('loading').style.display='none';
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
-  const u = estadoApp.utilizadores[email];
-  document.getElementById('header-user').textContent = 'Olá, '+u.nome.split(' ')[0]+'!';
-  document.getElementById('user-avatar').textContent = u.nome[0].toUpperCase();
-  carregarBebes();
-  iniciarVerificacaoAlarmes();
-  renderPediatras();
+  initApp();
 }
-
-function fazerLogout() {
-  estadoApp.sessao=null;
-  localStorage.removeItem('bs_sessao');
-  clearInterval(estadoApp.intervaloAlarmes);
-  document.getElementById('app-screen').style.display='none';
+function mostrarAuth(){
+  document.getElementById('loading').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
 }
 
-// Verificar sessão ao carregar
-window.addEventListener('load',()=>{
-  if(estadoApp.sessao && estadoApp.utilizadores[estadoApp.sessao]){
-    iniciarSessao(estadoApp.sessao);
+async function salvarD(){
+  localStorage.setItem('bs_d',JSON.stringify(D));
+  if(window._fb&&window._uid){try{const{db,doc,setDoc}=window._fb;await setDoc(doc(db,'users',window._uid),D);}catch(e){}}
+}
+
+function swAuth(t){
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.aform').forEach(f=>f.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('form-'+t).classList.add('active');
+}
+
+async function fazerRegisto(){
+  const n=document.getElementById('rg-n').value.trim(),e=document.getElementById('rg-e').value.trim(),p=document.getElementById('rg-p').value,t=document.getElementById('rg-t').value.trim();
+  if(!n||!e||!p){mostrarErr('Preenche todos os campos');return;}
+  if(p.length<6){mostrarErr('Password mínimo 6 caracteres');return;}
+  const btn=document.getElementById('btn-rg');btn.disabled=true;btn.textContent='A criar...';
+  const novoD={nome:n,email:e,tel:t,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+  try{
+    if(window._fb){
+      const{auth,createUserWithEmailAndPassword,updateProfile,db,doc,setDoc}=window._fb;
+      const c=await createUserWithEmailAndPassword(auth,e,p);
+      await updateProfile(c.user,{displayName:n});
+      await setDoc(doc(db,'users',c.user.uid),novoD);
+      window._D=novoD;localStorage.setItem('bs_d',JSON.stringify(novoD));
+    } else {
+      window._uid='local_'+Date.now();window._uname=n;window._D=novoD;
+      localStorage.setItem('bs_d',JSON.stringify(novoD));
+      localStorage.setItem('bs_sess',JSON.stringify({uid:window._uid,nome:n}));
+      mostrarApp();
+    }
+  }catch(ex){
+    const m={'auth/email-already-in-use':'Email já registado.','auth/weak-password':'Password fraca.'};
+    mostrarErr(m[ex.code]||'Erro: '+ex.message);
+    btn.disabled=false;btn.textContent='Começar os 7 Dias Grátis →';
   }
-});
+}
+
+async function fazerLogin(){
+  const e=document.getElementById('li-e').value.trim(),p=document.getElementById('li-p').value;
+  if(!e||!p){mostrarErr('Preenche email e password');return;}
+  const btn=document.getElementById('btn-li');btn.disabled=true;btn.textContent='A entrar...';
+  try{
+    if(window._fb){const{auth,signInWithEmailAndPassword}=window._fb;await signInWithEmailAndPassword(auth,e,p);}
+    else{
+      D=JSON.parse(localStorage.getItem('bs_d')||'{}');
+      if(!D.nome)D={nome:e.split('@')[0],email:e,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+      window._uid='local_demo';window._uname=D.nome;window._D=D;
+      localStorage.setItem('bs_sess',JSON.stringify({uid:'local_demo',nome:D.nome}));
+      mostrarApp();
+    }
+  }catch(ex){
+    const m={'auth/wrong-password':'Password incorrecta.','auth/user-not-found':'Email não encontrado.','auth/invalid-credential':'Email ou password incorrectos.'};
+    mostrarErr(m[ex.code]||'Erro ao entrar.');btn.disabled=false;btn.textContent='Entrar →';
+  }
+}
+
+async function fazerLogout(){
+  if(window._fb){try{const{auth,signOut}=window._fb;await signOut(auth);}catch(e){}}
+  D={};BA=null;clearInterval(INT_AL);localStorage.removeItem('bs_sess');mostrarAuth();
+}
+
+function mostrarErr(m){const e=document.getElementById('aerr');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+
+// ===== TRIAL CHECK =====
+function checkTrial(){
+  const pl=D.plano||'trial';
+  if(pl==='pago')return;
+  const inicio=new Date(D.trialInicio||new Date());
+  const dias=Math.floor((new Date()-inicio)/(1000*60*60*24));
+  const restam=Math.max(0,7-dias);
+  const hdr=document.getElementById('trial-hdr');
+  const warn=document.getElementById('trial-warn-box');
+  const dr=document.getElementById('dias-restantes');
+  if(restam>0){
+    hdr.textContent='⏳ '+restam+' dias grátis';
+    if(restam<=3){warn.style.display='block';if(dr)dr.textContent=restam;}
+  } else {
+    hdr.textContent='❌ Trial expirado';hdr.style.background='rgba(196,32,32,0.4)';
+    warn.style.display='block';if(dr){dr.textContent='0';document.getElementById('trial-warn-box').querySelector('p').textContent='O teu período de teste terminou. Activa por 500 MZN/ano para continuar.';}
+  }
+  // Pay status
+  const ps=document.getElementById('pay-status');
+  if(ps){
+    if(pl==='pago')ps.innerHTML='✅ <strong>Plano Anual Activo</strong> — Acesso completo';
+    else if(restam>0)ps.innerHTML=`⏳ <strong>Período de Teste</strong> — ${restam} dias restantes<br><span style="font-size:0.76rem;color:var(--cinza)">Activa agora para não perder os teus dados.</span>`;
+    else ps.innerHTML='❌ <strong>Trial Expirado</strong> — Activa para continuar';
+  }
+  // Ref
+  const ur=document.getElementById('user-ref');
+  if(ur&&window._uid)ur.textContent=window._uid.substr(-6).toUpperCase();
+}
+
+// ===== APP INIT =====
+function initApp(){
+  const nome=window._uname||D.nome||'Mãe';
+  document.getElementById('hdr-sub').textContent='Olá, '+nome.split(' ')[0]+'! 👋';
+  document.getElementById('user-av').textContent=(nome[0]||'M').toUpperCase();
+  document.getElementById('sb-nome').textContent='Olá, '+nome.split(' ')[0]+'!';
+  checkTrial();renderPeds();renderRecs();carregarBebes();iniciarAlarmes();
+  setTimeout(()=>{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();},3000);
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('open');
+}
 
 // ===== BEBÉS =====
-function getUserData(){return estadoApp.utilizadores[estadoApp.sessao];}
-function saveUserData(){localStorage.setItem('bs_utilizadores',JSON.stringify(estadoApp.utilizadores));}
-
-function abrirModalBebe(){
-  const u=getUserData();
-  if(u.bebes && u.bebes.length>=3){mostrarToast('⚠️ Máximo 3 bebés por conta');return;}
-  document.getElementById('modal-bebe').classList.add('open');
-}
-function fecharModal(id){document.getElementById(id).classList.remove('open');}
-
-function adicionarBebe(){
-  const nome=document.getElementById('bebe-nome').value.trim();
-  const dn=document.getElementById('bebe-dn').value;
-  const sexo=document.getElementById('bebe-sexo').value;
-  if(!nome||!dn){mostrarToast('❌ Preenche o nome e data de nascimento');return;}
-  const u=getUserData();
-  if(!u.bebes)u.bebes=[];
-  const id='bebe_'+Date.now();
-  u.bebes.push({id,nome,dn,sexo});
-  if(!u.dados)u.dados={};
-  u.dados[id]={gestacao:{},perinatal:{},crescimento:[],medicamentos:[],vacinas:{}};
-  saveUserData();
-  fecharModal('modal-bebe');
-  carregarBebes();
-  seleccionarBebe(id);
-  mostrarToast('✅ '+nome+' adicionado/a!');
-}
-
 function carregarBebes(){
-  const u=getUserData();
-  const bar=document.getElementById('bebe-bar');
-  bar.innerHTML='';
-  if(u.bebes && u.bebes.length>0){
-    u.bebes.forEach(b=>{
-      const chip=document.createElement('div');
-      chip.className='bebe-chip'+(estadoApp.bebeActivo===b.id?' active':'');
-      chip.innerHTML=(b.sexo==='f'?'👧':'👦')+' '+b.nome;
-      chip.onclick=()=>seleccionarBebe(b.id);
-      bar.appendChild(chip);
-    });
-  }
-  const add=document.createElement('div');
-  add.className='bebe-chip-add';
-  add.textContent='➕ Adicionar bebé';
-  add.onclick=abrirModalBebe;
-  bar.appendChild(add);
-  if(!estadoApp.bebeActivo && u.bebes && u.bebes.length>0){
-    seleccionarBebe(u.bebes[0].id);
-  }
+  const sb=document.getElementById('sb-bebes');sb.innerHTML='';
+  if(D.bebes?.length){D.bebes.forEach(b=>{
+    const c=document.createElement('div');c.className='bchip'+(BA===b.id?' active':'');
+    c.innerHTML=(b.sexo==='f'?'👧':'👦')+' '+b.nome;c.onclick=()=>{selBebe(b.id);};sb.appendChild(c);
+  });}
+  if(!BA&&D.bebes?.length)selBebe(D.bebes[0].id);
 }
 
-function seleccionarBebe(id){
-  estadoApp.bebeActivo=id;
-  document.querySelectorAll('.bebe-chip').forEach(c=>c.classList.remove('active'));
-  const u=getUserData();
-  const bebe=u.bebes.find(b=>b.id===id);
-  if(!bebe)return;
-  // Highlight chip
-  carregarBebes();
-  // Actualizar UI
-  document.getElementById('card-boas-vindas').style.display='none';
-  document.getElementById('resumo-bebe').style.display='block';
-  // Stats
-  const idade=calcularIdade(bebe.dn);
-  const dados=u.dados[id]||{};
-  const ultCrescimento=dados.crescimento&&dados.crescimento.length>0?dados.crescimento[dados.crescimento.length-1]:null;
-  document.getElementById('stats-bebe').innerHTML=`
-    <div class="stat-box"><div class="val">${bebe.nome.split(' ')[0]}</div><div class="lbl">${bebe.sexo==='f'?'👧 Menina':'👦 Menino'}</div></div>
-    <div class="stat-box"><div class="val">${idade.meses}</div><div class="lbl">Meses de idade</div><div class="sub">${idade.texto}</div></div>
-    ${ultCrescimento?`<div class="stat-box"><div class="val">${ultCrescimento.peso}kg</div><div class="lbl">Último peso</div></div>`:''}
-    ${ultCrescimento?`<div class="stat-box"><div class="val">${ultCrescimento.altura}cm</div><div class="lbl">Última altura</div></div>`:''}
+function addBebe(){
+  const n=document.getElementById('bn').value.trim(),dn=document.getElementById('bdn').value,s=document.getElementById('bsx').value;
+  if(!n||!dn){mostrarToast('❌ Preenche o nome e data');return;}
+  if(!D.bebes)D.bebes=[];
+  if(D.bebes.length>=1&&(D.plano||'trial')==='trial'){mostrarToast('⚠️ Activa o plano para mais bebés');return;}
+  if(D.bebes.length>=3){mostrarToast('⚠️ Máximo 3 bebés');return;}
+  const id='b'+Date.now();D.bebes.push({id,nome:n,dn,sexo:s});
+  if(!D.dados)D.dados={};D.dados[id]={gestacao:{},perinatal:{},crescimento:[],medicamentos:[],vacinas:{},consultas:[]};
+  salvarD();fecharModal('modal-bebe');document.getElementById('bn').value='';document.getElementById('bdn').value='';
+  carregarBebes();selBebe(id);mostrarToast('✅ '+n+' adicionado/a!');
+}
+
+function selBebe(id){
+  BA=id;carregarBebes();
+  const b=D.bebes?.find(b=>b.id===id);if(!b)return;
+  const age=calcAge(b.dn);const uc=D.dados?.[id]?.crescimento?.slice(-1)[0];
+  document.getElementById('card-bem').style.display='none';document.getElementById('resumo').style.display='block';
+  document.getElementById('agua-box').style.display=age.m>=6?'block':'none';
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${b.nome.split(' ')[0]}</div><div class="stat-lbl">${b.sexo==='f'?'👧 Menina':'👦 Menino'}</div></div>
+    <div class="stat-box"><div class="stat-val">${age.m}</div><div class="stat-lbl">Meses</div><div class="stat-sub">${age.txt}</div></div>
+    ${uc?`<div class="stat-box"><div class="stat-val">${uc.p}kg</div><div class="stat-lbl">Último peso</div></div>`:``}
+    ${uc?`<div class="stat-box"><div class="stat-val">${uc.a||'—'}cm</div><div class="stat-lbl">Última altura</div></div>`:``}
   `;
-  renderVacinasResumo(id);
-  renderAlarmes();
-  carregarFormsDados(id);
-  renderVacinas(id);
-  desenharCurva();
+  carregarForms(id);renderVacs(id);renderVacsIni(id);renderMeds(id);renderCons(id);renderGuia(id);renderAlarmes();desenharCurva();
 }
 
-function calcularIdade(dn){
-  if(!dn)return{meses:0,texto:'Recém-nascido'};
-  const nasc=new Date(dn);const hoje=new Date();
-  let meses=(hoje.getFullYear()-nasc.getFullYear())*12+(hoje.getMonth()-nasc.getMonth());
-  if(meses<0)meses=0;
-  const anos=Math.floor(meses/12);
-  const m=meses%12;
-  const texto=anos>0?(anos+'a '+(m>0?m+'m':'')):(meses+'m');
-  return{meses,anos,texto};
+function calcAge(dn){
+  if(!dn)return{m:0,txt:'Recém-nascido'};
+  const n=new Date(dn),h=new Date();
+  let m=(h.getFullYear()-n.getFullYear())*12+(h.getMonth()-n.getMonth());
+  if(m<0)m=0;const a=Math.floor(m/12),rm=m%12;
+  return{m,txt:a>0?(a+'a'+(rm?' '+rm+'m':'')):(m+'m')};
 }
 
-// ===== GESTAÇÃO =====
-function carregarFormsDados(id){
-  const u=getUserData();
-  const dados=u.dados[id]||{};
-  // Gestação
-  if(dados.gestacao){
-    const g=dados.gestacao;
-    if(g.semanas)document.getElementById('g-semanas').value=g.semanas;
-    if(g.consultas)document.getElementById('g-consultas').value=g.consultas;
-    if(g.tipo)document.querySelector(`input[name="g-tipo"][value="${g.tipo}"]`).checked=true;
-    if(g.obs)document.getElementById('g-obs').value=g.obs;
-  }
-  // Perinatal
-  if(dados.perinatal){
-    const p=dados.perinatal;
-    ['datanascimento','hora','peso','comprimento','cranio','ig','local','causa','apgar1','apgar5','obs'].forEach(k=>{
-      const el=document.getElementById('p-'+k);
-      if(el&&p[k])el.value=p[k];
-    });
-    if(p.tipoparto)document.querySelector(`input[name="p-tipoparto"][value="${p.tipoparto}"]`).checked=true;
-    if(p.reanim)document.querySelector(`input[name="p-reanim"][value="${p.reanim}"]`).checked=true;
-    if(p.pezinho)document.querySelector(`input[name="p-pezinho"][value="${p.pezinho}"]`).checked=true;
-  }
-  // Medicamentos
-  renderMedicamentos(id);
+// ===== TRIAGEM =====
+const TRI_PERGUNTAS=[
+  {id:'febre',q:'O bebé tem febre?',ic:'🌡️',sub:'Temperatura acima de 37.5°C',ops:[
+    {v:'nao',l:'Não tem febre',ic:'✅'},{v:'baixa',l:'Febre baixa (37.5°C - 38.5°C)',ic:'🟡'},{v:'alta',l:'Febre alta (acima de 38.5°C)',ic:'🔴'},{v:'muito_alta',l:'Febre muito alta (acima de 39°C)',ic:'🚨'}
+  ]},
+  {id:'ranho',q:'O bebé tem ranho / corrimento nasal?',ic:'🤧',sub:'Observe a cor e consistência',ops:[
+    {v:'nao',l:'Não tem ranho',ic:'✅'},{v:'transparente',l:'Ranho transparente / claro',ic:'🟡'},{v:'verde',l:'Ranho verde',ic:'🟠'},{v:'acinzentado',l:'Ranho acinzentado / escuro',ic:'🔴'}
+  ]},
+  {id:'olhos',q:'O bebé tem muita ramela nos olhos?',ic:'👁️',sub:'Secreção nos olhos',ops:[
+    {v:'nao',l:'Não tem ramela',ic:'✅'},{v:'pouca',l:'Pouca ramela (normal ao acordar)',ic:'🟡'},{v:'muita',l:'Muita ramela / olhos colados',ic:'🔴'}
+  ]},
+  {id:'vomito',q:'O bebé está com vómitos?',ic:'🤢',sub:'',ops:[
+    {v:'nao',l:'Não vomita',ic:'✅'},{v:'uma_vez',l:'Vomitou uma vez',ic:'🟡'},{v:'repetido',l:'Vómitos repetidos',ic:'🔴'},{v:'projetil',l:'Vómitos em jato / projéctil',ic:'🚨'}
+  ]},
+  {id:'diarreia',q:'O bebé tem diarreia?',ic:'💧',sub:'Fezes líquidas ou muito moles',ops:[
+    {v:'nao',l:'Não tem diarreia',ic:'✅'},{v:'pouca',l:'1-2 fezes moles',ic:'🟡'},{v:'muita',l:'Mais de 3 vezes',ic:'🔴'},{v:'sangue',l:'Com sangue nas fezes',ic:'🚨'}
+  ]},
+  {id:'rabo',q:'O rabinho do bebé está assado?',ic:'🍑',sub:'Irritação na área da fralda',ops:[
+    {v:'nao',l:'Não está assado',ic:'✅'},{v:'leve',l:'Levemente vermelho',ic:'🟡'},{v:'grave',l:'Muito vermelho / com feridas',ic:'🔴'}
+  ]},
+  {id:'erupcao',q:'O bebé tem erupção cutânea?',ic:'🔴',sub:'Manchas, borbulhas ou vermelhidão na pele',ops:[
+    {v:'nao',l:'Não tem erupção',ic:'✅'},{v:'leve',l:'Algumas manchinhas',ic:'🟡'},{v:'generalizada',l:'Erupção generalizada',ic:'🔴'},{v:'purpura',l:'Manchas roxas / escuras',ic:'🚨'}
+  ]},
+];
+
+let TRI_IDX=0,TRI_RESPS={};
+
+function showTri(){
+  TRI_IDX=0;TRI_RESPS={};
+  document.getElementById('triagem-screen').style.display='flex';
+  document.getElementById('triagem-screen').style.flexDirection='column';
+  renderPergunta();
 }
+
+function renderPergunta(){
+  const p=TRI_PERGUNTAS[TRI_IDX];
+  const pct=Math.round((TRI_IDX/TRI_PERGUNTAS.length)*100);
+  document.getElementById('tri-bar').style.width=pct+'%';
+  const body=document.getElementById('tri-body');
+  body.innerHTML=`<div class="tri-pergunta">
+    <div style="font-size:3rem;margin-bottom:10px">${p.ic}</div>
+    <h3>${p.q}</h3>
+    ${p.sub?`<p>${p.sub}</p>`:'<br>'}
+    <div class="tri-opcoes">${p.ops.map(o=>`
+      <button class="tri-opt ${TRI_RESPS[p.id]===o.v?'sel':''}" onclick="selOp('${p.id}','${o.v}',this)">
+        <span class="tri-opt-ico">${o.ic}</span>${o.l}
+      </button>`).join('')}
+    </div>
+  </div>`;
+  const footer=document.getElementById('tri-footer');
+  const isLast=TRI_IDX===TRI_PERGUNTAS.length-1;
+  footer.innerHTML=`
+    ${TRI_IDX>0?`<button class="btn-voltar" onclick="triBack()" style="margin-bottom:8px">← Voltar</button>`:''}
+    <button class="btn-tri" id="btn-tri-next" onclick="${isLast?'calcTri()':'triNext()'}">${isLast?'Ver Resultado 🔍':'Próxima →'}</button>
+    <button style="width:100%;padding:9px;border:none;background:none;color:var(--cinza);font-family:\'Nunito\',sans-serif;font-size:0.82rem;cursor:pointer;margin-top:6px" onclick="fecharTri()">✕ Fechar</button>
+  `;
+}
+
+function selOp(qid,val,btn){
+  TRI_RESPS[qid]=val;
+  document.querySelectorAll('.tri-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function triNext(){
+  if(!TRI_RESPS[TRI_PERGUNTAS[TRI_IDX].id]){mostrarToast('⚠️ Selecciona uma opção');return;}
+  TRI_IDX++;renderPergunta();
+}
+function triBack(){TRI_IDX--;renderPergunta();}
+function fecharTri(){document.getElementById('triagem-screen').style.display='none';}
+
+function calcTri(){
+  if(!TRI_RESPS[TRI_PERGUNTAS[TRI_IDX].id]){mostrarToast('⚠️ Selecciona uma opção');return;}
+  const r=TRI_RESPS;let nivel='casa';let alertas=[],conselhos=[];
+
+  // Febre
+  if(r.febre==='muito_alta'){nivel='urgente';alertas.push('Febre muito alta (>39°C) — risco de convulsões');}
+  else if(r.febre==='alta'){if(nivel!=='urgente')nivel='atencao';alertas.push('Febre alta (>38.5°C)');}
+  else if(r.febre==='baixa'){conselhos.push('Febre baixa — oferece líquidos e podes dar paracetamol pediátrico');}
+
+  // Ranho
+  if(r.ranho==='acinzentado'){if(nivel==='casa')nivel='atencao';alertas.push('Ranho acinzentado — possível infecção bacteriana');}
+  else if(r.ranho==='verde'){conselhos.push('Ranho verde — vigia 2-3 dias, pode ser normal');}
+
+  // Olhos
+  if(r.olhos==='muita'){if(nivel==='casa')nivel='atencao';alertas.push('Muita ramela nos olhos — possível conjuntivite');}
+
+  // Vómitos
+  if(r.vomito==='projetil'){nivel='urgente';alertas.push('Vómitos em jato — sinal de alarme urgente');}
+  else if(r.vomito==='repetido'){if(nivel!=='urgente')nivel='atencao';alertas.push('Vómitos repetidos — risco de desidratação');}
+
+  // Diarreia
+  if(r.diarreia==='sangue'){nivel='urgente';alertas.push('Sangue nas fezes — urgência médica');}
+  else if(r.diarreia==='muita'){if(nivel!=='urgente')nivel='atencao';alertas.push('Diarreia frequente — risco de desidratação');}
+
+  // Rabo
+  if(r.rabo==='grave'){if(nivel==='casa')nivel='atencao';alertas.push('Rabinho com feridas — precisa de tratamento');}
+
+  // Erupção
+  if(r.erupcao==='purpura'){nivel='urgente';alertas.push('Manchas roxas/escuras — possível meningite ou sépsis — URGENTE!');}
+  else if(r.erupcao==='generalizada'){if(nivel!=='urgente')nivel='atencao';alertas.push('Erupção cutânea generalizada');}
+
+  // Resultado
+  const body=document.getElementById('tri-body');
+  const footer=document.getElementById('tri-footer');
+
+  let html='';
+  if(nivel==='urgente'){
+    html=`<div class="res-card urgente">
+      <span class="res-ico">🚨</span>
+      <h3 style="color:var(--vm)">Leva ao Hospital AGORA</h3>
+      <p>O teu bebé tem sintomas que requerem atenção médica imediata. Não esperes — vai urgentemente ao hospital ou liga para o MISAU.</p>
+      <div class="res-sintomas">
+        <h4>⚠️ Sinais de Alarme Detectados:</h4>
+        <ul>${alertas.map(a=>`<li>${a}</li>`).join('')}</ul>
+      </div>
+      <a href="tel:1499" class="btn-urgente">📞 Ligar ao MISAU — 1499 (Grátis)</a>
+    </div>`;
+  } else if(nivel==='atencao'){
+    html=`<div class="res-card atenção">
+      <span class="res-ico">⚠️</span>
+      <h3 style="color:#7a5500">Consulta o Médico Hoje</h3>
+      <p>O teu bebé tem alguns sintomas que precisam de avaliação médica. Vai à consulta ainda hoje ou amanhã de manhã cedo.</p>
+      <div class="res-sintomas">
+        <h4>📋 Sintomas a Avaliar:</h4>
+        <ul>${alertas.map(a=>`<li>${a}</li>`).join('')}</ul>
+      </div>
+      ${conselhos.length?`<div style="margin-top:10px"><h4 style="font-size:0.78rem;font-weight:800;text-transform:uppercase">💡 Enquanto esperas:</h4><ul>${conselhos.map(c=>`<li>${c}</li>`).join('')}</ul></div>`:''}
+    </div>`;
+  } else {
+    html=`<div class="res-card casa">
+      <span class="res-ico">🏠</span>
+      <h3 style="color:var(--g1)">Podes Ficar em Casa</h3>
+      <p>O teu bebé não tem sinais de alarme graves. Podes tratá-lo em casa com os cuidados habituais.</p>
+      <div class="res-sintomas">
+        <h4>💡 Conselhos:</h4>
+        <ul>
+          ${conselhos.length?conselhos.map(c=>`<li>${c}</li>`).join(''):''}
+          <li>Mantém o bebé hidratado — leite e/ou água</li>
+          <li>Vigia os sintomas nas próximas 24h</li>
+          <li>Se piorar, vai ao médico</li>
+        </ul>
+      </div>
+    </div>`;
+  }
+  document.getElementById('tri-bar').style.width='100%';
+  body.innerHTML=`<div class="tri-resultado">${html}</div>`;
+  footer.innerHTML=`
+    <button class="btn-voltar" onclick="TRI_IDX=TRI_PERGUNTAS.length-1;TRI_RESPS=Object.assign({},TRI_RESPS);renderPergunta()">← Rever Respostas</button>
+    <button style="width:100%;padding:10px;border:none;background:none;color:var(--cinza);font-family:system-ui,-apple-system,sans-serif;font-size:0.84rem;cursor:pointer;margin-top:8px;font-weight:700" onclick="fecharTri()">✕ Fechar</button>
+  `;
+}
+
+// ===== FORMS =====
+function carregarForms(id){
+  const d=D.dados?.[id]||{};const g=d.gestacao||{};
+  if(g.sem)document.getElementById('g-sem').value=g.sem;
+  if(g.con)document.getElementById('g-con').value=g.con;
+  if(g.tipo){const el=document.querySelector(`input[name="gt"][value="${g.tipo}"]`);if(el)el.checked=true;}
+  if(g.obs)document.getElementById('g-obs').value=g.obs;
+  const p=d.perinatal||{};
+  const map={dn:'p-dn',hora:'p-hora',p:'p-p',c:'p-c',cr:'p-cr',ig:'p-ig',f:'p-f',obs:'p-obs'};
+  Object.entries(map).forEach(([k,eid])=>{const el=document.getElementById(eid);if(el&&p[k])el.value=p[k];});
+  if(p.loc){const el=document.getElementById('p-loc');if(el)el.value=p.loc;}
+  if(p.tp){const el=document.querySelector(`input[name="pp"][value="${p.tp}"]`);if(el)el.checked=true;}
+  if(p.al){const el=document.querySelector(`input[name="pal"][value="${p.al}"]`);if(el){el.checked=true;document.getElementById('formula-box').style.display=p.al!=='peito'?'block':'none';}}
+}
+
+function chkFormula(){const v=document.querySelector('input[name="pal"]:checked')?.value;document.getElementById('formula-box').style.display=v&&v!=='peito'?'block':'none';}
 
 function salvarGestacao(){
-  if(!estadoApp.bebeActivo){mostrarToast('⚠️ Selecciona um bebé primeiro');return;}
-  const u=getUserData();
-  const tipo=document.querySelector('input[name="g-tipo"]:checked');
-  u.dados[estadoApp.bebeActivo].gestacao={
-    semanas:document.getElementById('g-semanas').value,
-    consultas:document.getElementById('g-consultas').value,
-    tipo:tipo?tipo.value:'',
-    obs:document.getElementById('g-obs').value
-  };
-  saveUserData();
-  mostrarToast('✅ Dados da gestação guardados!');
+  if(!BA){mostrarToast('⚠️ Selecciona um bebé');return;}
+  const t=document.querySelector('input[name="gt"]:checked');
+  if(!D.dados[BA])D.dados[BA]={};
+  D.dados[BA].gestacao={sem:document.getElementById('g-sem').value,con:document.getElementById('g-con').value,tipo:t?t.value:'',obs:document.getElementById('g-obs').value};
+  salvarD();mostrarToast('✅ Gestação guardada!');
 }
 
 function salvarPerinatal(){
-  if(!estadoApp.bebeActivo){mostrarToast('⚠️ Selecciona um bebé primeiro');return;}
-  const u=getUserData();
-  const tipoparto=document.querySelector('input[name="p-tipoparto"]:checked');
-  const reanim=document.querySelector('input[name="p-reanim"]:checked');
-  const pezinho=document.querySelector('input[name="p-pezinho"]:checked');
-  u.dados[estadoApp.bebeActivo].perinatal={
-    datanascimento:document.getElementById('p-datanascimento').value,
-    hora:document.getElementById('p-hora').value,
-    peso:document.getElementById('p-peso').value,
-    comprimento:document.getElementById('p-comprimento').value,
-    cranio:document.getElementById('p-cranio').value,
-    ig:document.getElementById('p-ig').value,
-    local:document.getElementById('p-local').value,
-    tipoparto:tipoparto?tipoparto.value:'',
-    causa:document.getElementById('p-causa').value,
-    apgar1:document.getElementById('p-apgar1').value,
-    apgar5:document.getElementById('p-apgar5').value,
-    reanim:reanim?reanim.value:'',
-    pezinho:pezinho?pezinho.value:'',
-    obs:document.getElementById('p-obs').value
+  if(!BA){mostrarToast('⚠️ Selecciona um bebé');return;}
+  if(!D.dados[BA])D.dados[BA]={};
+  D.dados[BA].perinatal={
+    dn:document.getElementById('p-dn').value,hora:document.getElementById('p-hora').value,
+    p:document.getElementById('p-p').value,c:document.getElementById('p-c').value,cr:document.getElementById('p-cr').value,
+    ig:document.getElementById('p-ig').value,loc:document.getElementById('p-loc').value,
+    tp:document.querySelector('input[name="pp"]:checked')?.value||'',
+    al:document.querySelector('input[name="pal"]:checked')?.value||'',
+    f:document.getElementById('p-f').value,ap1:document.getElementById('p-ap1').value,obs:document.getElementById('p-obs').value
   };
-  // Actualizar data de nascimento do bebé
-  const dn=document.getElementById('p-datanascimento').value;
-  if(dn){
-    const bebe=u.bebes.find(b=>b.id===estadoApp.bebeActivo);
-    if(bebe)bebe.dn=dn;
-  }
-  saveUserData();
-  seleccionarBebe(estadoApp.bebeActivo);
-  mostrarToast('✅ Dados perinatais guardados!');
+  const dn=document.getElementById('p-dn').value;if(dn){const b=D.bebes?.find(b=>b.id===BA);if(b)b.dn=dn;}
+  salvarD();selBebe(BA);mostrarToast('✅ Dados perinatais guardados!');
 }
 
 // ===== CRESCIMENTO =====
-const pesoOMS_f=[[2.3,3.2,4.2],[2.9,4.2,5.5],[3.4,5.1,6.6],[4.0,5.8,7.5],[4.4,6.4,8.2],[4.8,6.9,8.8],[5.1,7.3,9.3],[5.3,7.6,9.7],[5.6,7.9,10.1],[5.8,8.2,10.4],[5.9,8.5,10.8],[6.1,8.7,11.0],[6.3,8.9,11.3],[6.4,9.2,11.5]];
-const pesoOMS_m=[[2.5,3.3,4.4],[3.2,4.5,5.8],[3.8,5.6,7.1],[4.4,6.4,8.0],[4.9,7.0,8.7],[5.3,7.5,9.3],[5.7,7.9,9.8],[5.9,8.3,10.2],[6.2,8.6,10.5],[6.4,8.9,10.9],[6.6,9.2,11.2],[6.8,9.4,11.5],[6.9,9.6,11.8],[7.1,9.9,12.1]];
+const OF=[[2.3,3.2,4.2],[2.9,4.2,5.5],[3.4,5.1,6.6],[4.0,5.8,7.5],[4.4,6.4,8.2],[4.8,6.9,8.8],[5.1,7.3,9.3],[5.3,7.6,9.7],[5.6,7.9,10.1],[5.8,8.2,10.4],[5.9,8.5,10.8],[6.1,8.7,11.0],[6.3,8.9,11.3],[6.4,9.2,11.5]];
+const OM=[[2.5,3.3,4.4],[3.2,4.5,5.8],[3.8,5.6,7.1],[4.4,6.4,8.0],[4.9,7.0,8.7],[5.3,7.5,9.3],[5.7,7.9,9.8],[5.9,8.3,10.2],[6.2,8.6,10.5],[6.4,8.9,10.9],[6.6,9.2,11.2],[6.8,9.4,11.5],[6.9,9.6,11.8],[7.1,9.9,12.1]];
 
-function avaliarCrescimento(){
-  if(!estadoApp.bebeActivo){mostrarToast('⚠️ Selecciona um bebé primeiro');return;}
-  const u=getUserData();
-  const bebe=u.bebes.find(b=>b.id===estadoApp.bebeActivo);
-  const idade=calcularIdade(bebe.dn);
-  const sexo=bebe.sexo;
-  const peso=parseFloat(document.getElementById('c-peso').value);
-  const altura=parseFloat(document.getElementById('c-altura').value);
-  const cranio=parseFloat(document.getElementById('c-cranio').value);
-  const res=document.getElementById('res-crescimento');
-  if(isNaN(peso)){res.className='resultado vermelho';res.style.display='block';res.innerHTML='⚠️ Insere pelo menos o peso.';return;}
-  const tabela=sexo==='f'?pesoOMS_f:pesoOMS_m;
-  const idx=Math.min(idade.meses,tabela.length-1);
-  const [pMin,pIdeal,pMax]=tabela[idx];
-  let msgs=[];let nivel='verde';
-  if(peso<pMin){msgs.push(`⚠️ Peso (${peso}kg) abaixo do esperado. Mínimo: ${pMin}kg. Consulta o pediatra.`);nivel='vermelho';}
-  else if(peso>pMax){msgs.push(`⚠️ Peso (${peso}kg) acima do esperado. Máximo: ${pMax}kg. Consulta o pediatra.`);nivel='amarelo';}
-  else msgs.push(`✅ Peso (${peso}kg) normal! Ideal: ${pIdeal}kg`);
-  if(!isNaN(altura)){
-    const altRef=50+idade.meses*1.8;
-    if(altura<altRef-8){msgs.push(`⚠️ Altura (${altura}cm) pode estar baixa.`);if(nivel==='verde')nivel='amarelo';}
-    else msgs.push(`✅ Altura (${altura}cm) adequada.`);
-  }
-  if(!isNaN(cranio)){
-    const cranioRef=34+idade.meses*0.5;
-    if(cranio<cranioRef-3||cranio>cranioRef+4){msgs.push(`⚠️ Perímetro craniano (${cranio}cm) fora do intervalo. Mostra ao médico.`);if(nivel==='verde')nivel='amarelo';}
-    else msgs.push(`✅ Perímetro craniano (${cranio}cm) normal.`);
-  }
-  res.className='resultado '+nivel;res.style.display='block';
-  res.innerHTML=`<strong>${bebe.nome} — ${idade.texto}</strong><br><br>`+msgs.join('<br><br>');
-  // Guardar
-  if(!u.dados[estadoApp.bebeActivo].crescimento)u.dados[estadoApp.bebeActivo].crescimento=[];
-  u.dados[estadoApp.bebeActivo].crescimento.push({peso,altura,cranio,data:new Date().toLocaleDateString('pt-MZ'),meses:idade.meses});
-  saveUserData();
-  desenharCurva();
+function avalCresc(){
+  if(!BA){mostrarToast('⚠️ Selecciona um bebé');return;}
+  const b=D.bebes?.find(b=>b.id===BA);const age=calcAge(b.dn);
+  const p=parseFloat(document.getElementById('c-p').value),a=parseFloat(document.getElementById('c-a').value),c=parseFloat(document.getElementById('c-c').value);
+  const res=document.getElementById('res-cresc');
+  if(isNaN(p)){res.className='resultado vermelho';res.style.display='block';res.textContent='⚠️ Insere pelo menos o peso.';return;}
+  const tab=b.sexo==='f'?OF:OM;const idx=Math.min(age.m,tab.length-1);const[mn,id2,mx]=tab[idx];
+  let msgs=[],niv='verde';
+  if(p<mn){msgs.push(`⚠️ Peso (${p}kg) abaixo do esperado (mín. ${mn}kg). Consulta o pediatra.`);niv='vermelho';}
+  else if(p>mx){msgs.push(`⚠️ Peso (${p}kg) acima do esperado (máx. ${mx}kg).`);niv='amarelo';}
+  else msgs.push(`✅ Peso (${p}kg) normal! Ideal: ${id2}kg.`);
+  if(!isNaN(a)){const ar=50+age.m*1.8;if(a<ar-8){msgs.push(`⚠️ Altura (${a}cm) pode estar baixa.`);if(niv==='verde')niv='amarelo';}else msgs.push(`✅ Altura (${a}cm) adequada.`);}
+  res.className='resultado '+niv;res.style.display='block';
+  res.innerHTML=`<strong>${b.nome} — ${age.txt}</strong><br><br>`+msgs.join('<br><br>');
+  if(!D.dados[BA].crescimento)D.dados[BA].crescimento=[];
+  D.dados[BA].crescimento.push({p,a:isNaN(a)?null:a,c:isNaN(c)?null:c,m:age.m,dt:new Date().toLocaleDateString('pt-MZ')});
+  salvarD();desenharCurva();
 }
 
 function desenharCurva(){
-  if(!estadoApp.bebeActivo)return;
-  const u=getUserData();
-  const bebe=u.bebes.find(b=>b.id===estadoApp.bebeActivo);
-  if(!bebe)return;
-  const tabela=bebe.sexo==='f'?pesoOMS_f:pesoOMS_m;
-  const dados=u.dados[estadoApp.bebeActivo];
-  const canvas=document.getElementById('curvaCanvas');
-  const ctx=canvas.getContext('2d');
-  const W=canvas.width,H=canvas.height;
-  ctx.clearRect(0,0,W,H);
-  const padL=38,padR=14,padT=14,padB=28;
-  const gW=W-padL-padR,gH=H-padT-padB;
-  const meses=tabela.length;
-  ctx.fillStyle='#f9fafb';ctx.fillRect(0,0,W,H);
+  if(!BA)return;const b=D.bebes?.find(b=>b.id===BA);if(!b)return;
+  const tab=b.sexo==='f'?OF:OM;const cresc=D.dados?.[BA]?.crescimento||[];
+  const cv=document.getElementById('cv');if(!cv)return;const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,pL=38,pR=14,pT=14,pB=28,gW=W-pL-pR,gH=H-pT-pB,n=tab.length;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#f9fafb';ctx.fillRect(0,0,W,H);
   ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=padT+i*(gH/4);ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(W-padR,y);ctx.stroke();}
-  const xP=m=>padL+(m/(meses-1))*gW;
-  const yP=kg=>padT+gH-(kg/15)*gH;
-  ctx.beginPath();
-  tabela.forEach((r,i)=>i===0?ctx.moveTo(xP(i),yP(r[2])):ctx.lineTo(xP(i),yP(r[2])));
-  tabela.slice().reverse().forEach((r,i)=>ctx.lineTo(xP(meses-1-i),yP(r[0])));
-  ctx.closePath();ctx.fillStyle='rgba(74,171,109,0.15)';ctx.fill();
-  ctx.beginPath();ctx.strokeStyle='#2d7d4f';ctx.lineWidth=2;
-  tabela.forEach((r,i)=>i===0?ctx.moveTo(xP(i),yP(r[1])):ctx.lineTo(xP(i),yP(r[1])));
-  ctx.stroke();
-  // Pontos de crescimento
-  if(dados&&dados.crescimento&&dados.crescimento.length>0){
-    ctx.strokeStyle='#f0b429';ctx.lineWidth=2;ctx.beginPath();
-    dados.crescimento.forEach((d,i)=>{
-      const px=xP(Math.min(d.meses,meses-1));const py=yP(d.peso);
-      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
-    });
-    ctx.stroke();
-    dados.crescimento.forEach(d=>{
-      const px=xP(Math.min(d.meses,meses-1));const py=yP(d.peso);
-      ctx.beginPath();ctx.arc(px,py,5,0,2*Math.PI);
-      ctx.fillStyle='#f0b429';ctx.fill();
-      ctx.strokeStyle='#d4a000';ctx.lineWidth=1.5;ctx.stroke();
-    });
+  for(let i=0;i<=4;i++){const y=pT+i*(gH/4);ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();}
+  const xP=m=>pL+(m/(n-1))*gW,yP=kg=>pT+gH-(kg/15)*gH;
+  ctx.beginPath();tab.forEach((r,i)=>i===0?ctx.moveTo(xP(i),yP(r[2])):ctx.lineTo(xP(i),yP(r[2])));
+  tab.slice().reverse().forEach((r,i)=>ctx.lineTo(xP(n-1-i),yP(r[0])));ctx.closePath();
+  ctx.fillStyle='rgba(16,119,60,0.12)';ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='#10773c';ctx.lineWidth=2;tab.forEach((r,i)=>i===0?ctx.moveTo(xP(i),yP(r[1])):ctx.lineTo(xP(i),yP(r[1])));ctx.stroke();
+  if(cresc.length){
+    ctx.strokeStyle='#e8920a';ctx.lineWidth=2;ctx.beginPath();cresc.forEach((d,i)=>{const px=xP(Math.min(d.m,n-1)),py=yP(d.p);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});ctx.stroke();
+    cresc.forEach(d=>{ctx.beginPath();ctx.arc(xP(Math.min(d.m,n-1)),yP(d.p),5,0,2*Math.PI);ctx.fillStyle='#e8920a';ctx.fill();});
   }
-  ctx.strokeStyle='#9ca3af';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,H-padB);ctx.lineTo(W-padR,H-padB);ctx.stroke();
-  ctx.fillStyle='#6b7280';ctx.font='10px DM Sans,sans-serif';ctx.textAlign='center';
-  [0,3,6,9,12].forEach(m=>{if(m<meses)ctx.fillText(m+'m',xP(m),H-padB+12);});
-  ctx.textAlign='right';
-  [3,6,9,12,15].forEach(kg=>ctx.fillText(kg+'kg',padL-4,yP(kg)+3));
+  ctx.strokeStyle='#9ca3af';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pL,pT);ctx.lineTo(pL,H-pB);ctx.lineTo(W-pR,H-pB);ctx.stroke();
+  ctx.fillStyle='#6b7280';ctx.font='10px Nunito,sans-serif';ctx.textAlign='center';
+  [0,3,6,9,12].forEach(m=>{if(m<n)ctx.fillText(m+'m',xP(m),H-pB+12);});
+  ctx.textAlign='right';[3,6,9,12,15].forEach(kg=>ctx.fillText(kg+'kg',pL-4,yP(kg)+3));
 }
 
-// ===== VACINAS =====
-const calendarioVacinas=[
-  {id:'bcg',nome:'BCG',doenca:'Tuberculose',idade:0,idadeTexto:'Ao nascer',dose:'1 dose'},
-  {id:'vpo0',nome:'VPO 0',doenca:'Poliomielite',idade:0,idadeTexto:'Ao nascer',dose:'1 dose'},
-  {id:'penta1',nome:'Pentavalente 1',doenca:'Difteria, Tétano, Tosse Convulsa, Hib, Hepatite B',idade:1.5,idadeTexto:'6 semanas',dose:'1ª dose'},
-  {id:'vpo1',nome:'VPO 1',doenca:'Poliomielite',idade:1.5,idadeTexto:'6 semanas',dose:'1ª dose'},
-  {id:'pcv1',nome:'PCV 1',doenca:'Pneumococo',idade:1.5,idadeTexto:'6 semanas',dose:'1ª dose'},
-  {id:'rota1',nome:'Rotavírus 1',doenca:'Diarreia por Rotavírus',idade:1.5,idadeTexto:'6 semanas',dose:'1ª dose'},
-  {id:'penta2',nome:'Pentavalente 2',doenca:'Difteria, Tétano, Tosse Convulsa, Hib, Hepatite B',idade:2.5,idadeTexto:'10 semanas',dose:'2ª dose'},
-  {id:'vpo2',nome:'VPO 2',doenca:'Poliomielite',idade:2.5,idadeTexto:'10 semanas',dose:'2ª dose'},
-  {id:'pcv2',nome:'PCV 2',doenca:'Pneumococo',idade:2.5,idadeTexto:'10 semanas',dose:'2ª dose'},
-  {id:'rota2',nome:'Rotavírus 2',doenca:'Diarreia por Rotavírus',idade:2.5,idadeTexto:'10 semanas',dose:'2ª dose'},
-  {id:'penta3',nome:'Pentavalente 3',doenca:'Difteria, Tétano, Tosse Convulsa, Hib, Hepatite B',idade:3.5,idadeTexto:'14 semanas',dose:'3ª dose'},
-  {id:'vpo3',nome:'VPO 3',doenca:'Poliomielite',idade:3.5,idadeTexto:'14 semanas',dose:'3ª dose'},
-  {id:'pcv3',nome:'PCV 3',doenca:'Pneumococo',idade:3.5,idadeTexto:'14 semanas',dose:'3ª dose'},
-  {id:'ipv',nome:'IPV',doenca:'Poliomielite injectável',idade:3.5,idadeTexto:'14 semanas',dose:'1 dose'},
-  {id:'sarampo1',nome:'Sarampo 1',doenca:'Sarampo',idade:9,idadeTexto:'9 meses',dose:'1ª dose'},
-  {id:'sarampo2',nome:'Sarampo 2 + Rubéola',doenca:'Sarampo e Rubéola',idade:15,idadeTexto:'15 meses',dose:'2ª dose'},
+// ===== VACINAS PAV UNICEF =====
+const VACS=[
+  {id:'bcg',n:'BCG',d:'Tuberculose',ia:0,txt:'Ao nascer'},
+  {id:'hepb0',n:'Hepatite B (0)',d:'Hepatite B',ia:0,txt:'Ao nascer'},
+  {id:'vpo0',n:'VPO 0',d:'Poliomielite',ia:0,txt:'Ao nascer'},
+  {id:'penta1',n:'Pentavalente 1',d:'DTP + HepB + Hib',ia:1.5,txt:'6 semanas'},
+  {id:'vpo1',n:'VPO 1',d:'Poliomielite oral',ia:1.5,txt:'6 semanas'},
+  {id:'pcv1',n:'PCV10 (1)',d:'Pneumococo 10 serotipos',ia:1.5,txt:'6 semanas'},
+  {id:'rota1',n:'Rotavírus 1',d:'Gastroenterite viral',ia:1.5,txt:'6 semanas'},
+  {id:'penta2',n:'Pentavalente 2',d:'DTP + HepB + Hib',ia:2.5,txt:'10 semanas'},
+  {id:'vpo2',n:'VPO 2',d:'Poliomielite oral',ia:2.5,txt:'10 semanas'},
+  {id:'pcv2',n:'PCV10 (2)',d:'Pneumococo',ia:2.5,txt:'10 semanas'},
+  {id:'rota2',n:'Rotavírus 2',d:'Gastroenterite viral',ia:2.5,txt:'10 semanas'},
+  {id:'penta3',n:'Pentavalente 3',d:'DTP + HepB + Hib',ia:3.5,txt:'14 semanas'},
+  {id:'vpo3',n:'VPO 3',d:'Poliomielite oral',ia:3.5,txt:'14 semanas'},
+  {id:'pcv3',n:'PCV10 (3)',d:'Pneumococo',ia:3.5,txt:'14 semanas'},
+  {id:'ipv',n:'IPV',d:'Poliomielite injectável',ia:3.5,txt:'14 semanas'},
+  {id:'vita6',n:'Vitamina A (1)',d:'Deficiência Vitamina A',ia:6,txt:'6 meses'},
+  {id:'sara1',n:'Sarampo 1',d:'Sarampo',ia:9,txt:'9 meses'},
+  {id:'fy',n:'Febre Amarela',d:'Zonas endémicas',ia:9,txt:'9 meses'},
+  {id:'vita12',n:'Vitamina A (2)',d:'Deficiência Vitamina A',ia:12,txt:'12 meses'},
+  {id:'sara2',n:'Sarampo 2 + Rubéola',d:'SRC',ia:15,txt:'15 meses'},
+  {id:'dtp_ref',n:'DTP Reforço',d:'Difteria, Tétano, Tosse',ia:18,txt:'18 meses'},
 ];
 
-function renderVacinas(bebeId){
-  const u=getUserData();
-  const bebe=u.bebes.find(b=>b.id===bebeId);
-  if(!bebe)return;
-  const idade=calcularIdade(bebe.dn);
-  const vacinasFeitas=u.dados[bebeId].vacinas||{};
-  const lista=document.getElementById('lista-vacinas');
-  lista.innerHTML='';
-  calendarioVacinas.forEach(v=>{
-    const feita=vacinasFeitas[v.id];
-    const atrasada=!feita&&idade.meses>v.idade+1;
-    const pendente=!feita&&!atrasada;
-    const estado=feita?'feita':atrasada?'atrasada':'pendente';
-    const div=document.createElement('div');
-    div.className='vacina-item '+estado;
-    div.innerHTML=`
-      <div class="vacina-check">${feita?'✅':atrasada?'⚠️':'⏳'}</div>
-      <div class="vacina-info">
-        <h4>${v.nome}</h4>
-        <p>${v.doenca}</p>
-        <p style="font-size:0.72rem;margin-top:2px;color:${feita?'var(--verde)':atrasada?'var(--vermelho)':'var(--cinza)'}">${v.idadeTexto} — ${v.dose}</p>
-      </div>
-      <span class="vacina-badge" style="background:${feita?'#e8f5ee':atrasada?'#fdecea':'#fff8e1'};color:${feita?'var(--verde)':atrasada?'var(--vermelho)':'#7a5500'}">${feita?'Feita':atrasada?'Atrasada':'Pendente'}</span>
-    `;
-    div.onclick=()=>toggleVacina(bebeId,v.id,feita);
-    lista.appendChild(div);
-  });
+function renderVacs(bid){
+  const b=D.bebes?.find(b=>b.id===bid);if(!b)return;
+  const age=calcAge(b.dn);const f=D.dados?.[bid]?.vacinas||{};
+  document.getElementById('lista-v').innerHTML=VACS.map(v=>{
+    const done=f[v.id],late=!done&&age.m>v.ia+1,est=done?'feita':late?'atrasada':'pendente';
+    return`<div class="vi ${est}" onclick="togVac('${bid}','${v.id}',${!!done})">
+      <div style="font-size:1.2rem;flex-shrink:0">${done?'✅':late?'⚠️':'⏳'}</div>
+      <div class="vi-info" style="flex:1"><h4>${v.n}</h4><p>${v.d} · ${v.txt}${done?' · '+f[v.id]:''}</p></div>
+      <span class="vbadge" style="background:${done?'#e8f5ee':late?'#fdecea':'#fff8e1'};color:${done?'var(--g1)':late?'var(--vm)':'#7a5500'}">${done?'Feita':late?'Atrasada':'Pendente'}</span>
+    </div>`;
+  }).join('');
+}
+function togVac(bid,vid,done){
+  if(!D.dados[bid].vacinas)D.dados[bid].vacinas={};
+  if(done)delete D.dados[bid].vacinas[vid];else D.dados[bid].vacinas[vid]=new Date().toLocaleDateString('pt-MZ');
+  salvarD();renderVacs(bid);renderVacsIni(bid);mostrarToast(done?'↩️ Desmarcada':'✅ Vacina registada!');
+}
+function renderVacsIni(bid){
+  const b=D.bebes?.find(b=>b.id===bid);if(!b)return;
+  const age=calcAge(b.dn);const f=D.dados?.[bid]?.vacinas||{};
+  const prox=VACS.filter(v=>!f[v.id]&&v.ia<=age.m+2).slice(0,3);
+  const el=document.getElementById('vac-ini');if(!el)return;
+  el.innerHTML=prox.length?prox.map(v=>{const late=age.m>v.ia+1;return`<div class="vi ${late?'atrasada':'pendente'}" style="margin-bottom:6px">
+    <div style="font-size:1rem">${late?'⚠️':'⏳'}</div><div class="vi-info"><h4>${v.n}</h4><p>${v.txt}</p></div>
+  </div>`;}).join(''):'<div class="empty"><span class="ico">🎉</span><p>Vacinas em dia!</p></div>';
 }
 
-function toggleVacina(bebeId,vacinaId,feita){
-  const u=getUserData();
-  if(!u.dados[bebeId].vacinas)u.dados[bebeId].vacinas={};
-  if(feita){delete u.dados[bebeId].vacinas[vacinaId];}
-  else{u.dados[bebeId].vacinas[vacinaId]=new Date().toLocaleDateString('pt-MZ');}
-  saveUserData();
-  renderVacinas(bebeId);
-  renderVacinasResumo(bebeId);
-  mostrarToast(feita?'↩️ Vacina desmarcada':'✅ Vacina marcada como feita!');
+// ===== CONSULTAS =====
+function salvarCons(){
+  if(!BA){mostrarToast('⚠️ Selecciona um bebé');return;}
+  const dt=document.getElementById('co-d').value;if(!dt){mostrarToast('❌ Insere a data');return;}
+  if(!D.dados[BA].consultas)D.dados[BA].consultas=[];
+  D.dados[BA].consultas.unshift({id:'c'+Date.now(),dt,med:document.getElementById('co-m').value,
+    p:document.getElementById('co-p').value,a:document.getElementById('co-a').value,t:document.getElementById('co-t').value,
+    obs:document.getElementById('co-obs').value,rec:document.getElementById('co-rec').value});
+  salvarD();['co-d','co-m','co-p','co-a','co-t','co-obs','co-rec'].forEach(id=>document.getElementById(id).value='');
+  renderCons(BA);mostrarToast('✅ Consulta guardada!');
+}
+function renderCons(bid){
+  const cons=D.dados?.[bid]?.consultas||[];const el=document.getElementById('lista-cons');if(!el)return;
+  el.innerHTML=cons.length?cons.map(c=>`<div class="cons-item">
+    <h4 style="font-size:0.86rem;font-weight:800;color:var(--g1)">🩺 ${c.med||'Consulta'}</h4>
+    <p style="font-size:0.76rem;color:var(--cinza);margin-top:2px">${c.p?'⚖️ '+c.p+'kg ':''} ${c.a?'📏 '+c.a+'cm ':''} ${c.t?'🌡️ '+c.t+'°C ':''}</p>
+    ${c.obs?`<p style="font-size:0.78rem;margin-top:3px;line-height:1.4">${c.obs}</p>`:''}
+    ${c.rec?`<p style="font-size:0.78rem;color:var(--g1);font-weight:700;margin-top:3px">💊 ${c.rec}</p>`:''}
+    <p style="font-size:0.68rem;color:var(--cinza2);margin-top:4px">📅 ${c.dt}</p>
+  </div>`).join(''):'<div class="empty"><span class="ico">🩺</span><p>Sem consultas</p></div>';
 }
 
-function renderVacinasResumo(bebeId){
-  const u=getUserData();
-  const bebe=u.bebes.find(b=>b.id===bebeId);
-  if(!bebe)return;
-  const idade=calcularIdade(bebe.dn);
-  const vacinasFeitas=u.dados[bebeId].vacinas||{};
-  const proximas=calendarioVacinas.filter(v=>!vacinasFeitas[v.id]&&v.idade<=idade.meses+2);
-  const el=document.getElementById('proximas-vacinas-resumo');
-  if(!el)return;
-  if(proximas.length===0){el.innerHTML='<div class="empty"><span class="ico">🎉</span><p>Todas as vacinas em dia!</p></div>';return;}
-  el.innerHTML=proximas.slice(0,3).map(v=>`
-    <div class="vacina-item ${idade.meses>v.idade+1?'atrasada':'pendente'}" style="margin-bottom:8px">
-      <div class="vacina-check">${idade.meses>v.idade+1?'⚠️':'⏳'}</div>
-      <div class="vacina-info"><h4>${v.nome}</h4><p>${v.idadeTexto}</p></div>
+// ===== ALIMENTAÇÃO =====
+function renderGuia(bid){
+  const b=D.bebes?.find(b=>b.id===bid);if(!b)return;
+  const m=calcAge(b.dn).m;const el=document.getElementById('guia-alim');if(!el)return;
+  if(m<6)el.innerHTML=`<div class="resultado verde" style="display:block">🤱 <strong>Até 6 meses — Leite exclusivo</strong><br>Leite materno ou fórmula. Não precisa de água, sumos ou papas.</div>`;
+  else if(m<8)el.innerHTML=`<div class="resultado amarelo" style="display:block">🥣 <strong>6-8 meses — Início</strong><br>Papas de frutas (banana, papaia), cereais sem glúten, purés de legumes. Começa a dar água.</div>`;
+  else if(m<12)el.innerHTML=`<div class="resultado verde" style="display:block">🍚 <strong>8-12 meses — Texturas variadas</strong><br>Xima suave, legumes esmagados, frango desfiado, peixe. Água entre refeições.</div>`;
+  else el.innerHTML=`<div class="resultado verde" style="display:block">🍽️ <strong>12+ meses — Mesa da família</strong><br>Xima, feijão, legumes, carne, peixe. Evita sal excessivo e açúcar. Água durante o dia.</div>`;
+}
+
+const RECS=[
+  {m:6,n:'Papa de Banana e Papaia',co:'#e8f5ee',cf:'#1a5c34',e:'🍌',d:'Rica em potássio e vitaminas.',i:['1 banana madura','2 colheres de papaia','Leite materno q.b.'],p:'Esmaga e mistura com leite para tornar cremosa.'},
+  {m:6,n:'Puré de Batata-doce',co:'#fff3e0',cf:'#7a5500',e:'🍠',d:'Vitamina A e energia.',i:['1 batata-doce pequena','Água q.b.'],p:'Coze e esmassa até ficar sem grumos.'},
+  {m:8,n:'Papa de Xima com Cenoura',co:'#e3f0fb',cf:'#1a4a7a',e:'🌽',d:'Receita moçambicana adaptada.',i:['2 colheres de fuba','1 cenoura','200ml água'],p:'Coze a cenoura. Prepara a xima suave. Mistura.'},
+  {m:8,n:'Puré de Frango',co:'#fce4ec',cf:'#7a0050',e:'🍗',d:'Proteína essencial. Sem sal!',i:['50g frango cozido','1 batata','Abóbora'],p:'Cozinha tudo. Esmassa até ficar suave. Sem sal.'},
+  {m:12,n:'Feijão com Arroz',co:'#e8f5ee',cf:'#1a5c34',e:'🫘',d:'Proteína e hidratos tradicionais.',i:['Feijão cozido','Arroz cozido','1 gota azeite'],p:'Esmassa levemente. Combina. Pode ter textura.'},
+];
+
+function renderRecs(){
+  const el=document.getElementById('lista-rec');if(!el)return;
+  el.innerHTML=RECS.map(r=>`<div class="receita-card">
+    <div class="rec-hdr" style="background:${r.co};color:${r.cf}">${r.e} ${r.n} <span class="tag" style="background:${r.co};color:${r.cf};border:1.5px solid ${r.cf}40;margin-left:auto">+${r.m}m</span></div>
+    <div class="rec-body"><p style="font-size:0.8rem;font-style:italic;color:var(--cinza)">${r.d}</p>
+      <p style="font-size:0.74rem;font-weight:800;color:var(--g1);margin:7px 0 3px">INGREDIENTES:</p>
+      <ul style="list-style:none">${r.i.map(x=>`<li style="font-size:0.76rem;color:var(--cinza);padding:1px 0;padding-left:12px;position:relative"><span style="position:absolute;left:0;color:var(--g4)">•</span>${x}</li>`).join('')}</ul>
+      <p style="font-size:0.76rem;margin-top:7px"><strong>Como fazer:</strong> ${r.p}</p>
     </div>
-  `).join('');
+  </div>`).join('');
 }
 
 // ===== MEDICAÇÃO =====
-function adicionarMedicamento(){
-  if(!estadoApp.bebeActivo){mostrarToast('⚠️ Selecciona um bebé primeiro');return;}
-  const nome=document.getElementById('med-nome').value.trim();
-  const dose=document.getElementById('med-dose').value.trim();
-  const dias=document.getElementById('med-dias').value;
-  const horariosStr=document.getElementById('med-horarios').value.trim();
-  const obs=document.getElementById('med-obs').value.trim();
-  if(!nome||!horariosStr){mostrarToast('❌ Preenche o nome e os horários');return;}
-  const horarios=horariosStr.split(',').map(h=>h.trim()).filter(h=>h);
-  const u=getUserData();
-  if(!u.dados[estadoApp.bebeActivo].medicamentos)u.dados[estadoApp.bebeActivo].medicamentos=[];
-  const med={id:'med_'+Date.now(),nome,dose,dias,horarios,obs,activo:true,criado:new Date().toLocaleDateString('pt-MZ')};
-  u.dados[estadoApp.bebeActivo].medicamentos.push(med);
-  saveUserData();
-  // Limpar form
-  ['med-nome','med-dose','med-dias','med-horarios','med-obs'].forEach(id=>document.getElementById(id).value='');
-  renderMedicamentos(estadoApp.bebeActivo);
-  renderAlarmes();
-  mostrarToast('✅ Medicamento adicionado com alarmes!');
+function addMed(){
+  if(!BA){mostrarToast('⚠️ Selecciona um bebé');return;}
+  const n=document.getElementById('m-n').value.trim(),hs=document.getElementById('m-h').value.trim();
+  if(!n||!hs){mostrarToast('❌ Preenche o nome e horários');return;}
+  const horas=hs.split(',').map(h=>h.trim()).filter(Boolean);
+  if(!D.dados[BA].medicamentos)D.dados[BA].medicamentos=[];
+  D.dados[BA].medicamentos.push({id:'m'+Date.now(),nome:n,dose:document.getElementById('m-d').value,dias:document.getElementById('m-di').value,horas,obs:document.getElementById('m-o').value,activo:true,dt:new Date().toLocaleDateString('pt-MZ')});
+  salvarD();['m-n','m-d','m-di','m-h','m-o'].forEach(id=>document.getElementById(id).value='');
+  renderMeds(BA);renderAlarmes();mostrarToast('✅ Medicamento adicionado!');
 }
-
-function renderMedicamentos(bebeId){
-  const u=getUserData();
-  const meds=u.dados[bebeId].medicamentos||[];
-  const el=document.getElementById('lista-medicamentos');
-  if(!el)return;
-  if(meds.length===0){el.innerHTML='<div class="empty"><span class="ico">💊</span><p>Sem medicamentos registados</p></div>';return;}
-  el.innerHTML=meds.filter(m=>m.activo).map(m=>`
-    <div class="med-card">
-      <button class="med-delete" onclick="removerMedicamento('${bebeId}','${m.id}')">✕</button>
-      <h4>💊 ${m.nome}</h4>
-      <p>${m.dose?'Dose: '+m.dose:''} ${m.dias?'· '+m.dias+' dias':''}</p>
-      ${m.obs?`<p style="margin-top:4px;font-style:italic">${m.obs}</p>`:''}
-      <div class="med-horarios">${m.horarios.map(h=>`<span class="med-hora">🕐 ${h}</span>`).join('')}</div>
-      <p style="font-size:0.72rem;color:var(--cinza2);margin-top:6px">Adicionado em ${m.criado}</p>
-    </div>
-  `).join('');
+function renderMeds(bid){
+  const meds=D.dados?.[bid]?.medicamentos?.filter(m=>m.activo)||[];
+  const el=document.getElementById('lista-m');if(!el)return;
+  el.innerHTML=meds.length?meds.map(m=>`<div class="med-card">
+    <button class="del-btn" onclick="delMed('${bid}','${m.id}')">✕</button>
+    <h4 style="font-size:0.86rem;font-weight:800;color:var(--g1)">💊 ${m.nome}</h4>
+    <p style="font-size:0.76rem;color:var(--cinza)">${m.dose?'Dose: '+m.dose:''} ${m.dias?'· '+m.dias+' dias':''}</p>
+    <div class="med-horas">${m.horas.map(h=>`<span class="med-hora">🕐 ${h}</span>`).join('')}</div>
+  </div>`).join(''):'<div class="empty"><span class="ico">💊</span><p>Sem medicamentos</p></div>';
 }
-
-function removerMedicamento(bebeId,medId){
-  const u=getUserData();
-  u.dados[bebeId].medicamentos=u.dados[bebeId].medicamentos.filter(m=>m.id!==medId);
-  saveUserData();
-  renderMedicamentos(bebeId);
-  renderAlarmes();
-  mostrarToast('🗑️ Medicamento removido');
-}
-
-// ===== ALARMES =====
+function delMed(bid,mid){D.dados[bid].medicamentos=D.dados[bid].medicamentos.filter(m=>m.id!==mid);salvarD();renderMeds(bid);renderAlarmes();mostrarToast('🗑️ Removido');}
 function renderAlarmes(){
-  if(!estadoApp.bebeActivo)return;
-  const u=getUserData();
-  const meds=u.dados[estadoApp.bebeActivo].medicamentos||[];
-  const activosMeds=meds.filter(m=>m.activo);
-  const el=document.getElementById('lista-alarmes');
-  const elInicio=document.getElementById('proximos-alarmes');
-  if(!el)return;
-  if(activosMeds.length===0){
-    el.innerHTML='<div class="empty"><span class="ico">🔕</span><p>Sem alarmes activos</p></div>';
-    if(elInicio)elInicio.innerHTML='<div class="empty"><span class="ico">😴</span><p>Sem alarmes activos</p></div>';
-    return;
-  }
-  let alarmes=[];
-  activosMeds.forEach(m=>{
-    m.horarios.forEach(h=>{
-      alarmes.push({nome:m.nome,dose:m.dose,hora:h,medId:m.id});
-    });
-  });
-  alarmes.sort((a,b)=>a.hora.localeCompare(b.hora));
-  el.innerHTML=alarmes.map(a=>`
-    <div class="alarme-item">
-      <span class="alarme-ico">💊</span>
-      <div class="alarme-info">
-        <h4>${a.nome}</h4>
-        <p>${a.dose?a.dose+' · ':''}<strong>${a.hora}</strong></p>
-      </div>
-      <button class="alarme-toggle on" title="Alarme activo"></button>
-    </div>
-  `).join('');
-  if(elInicio)elInicio.innerHTML=alarmes.slice(0,3).map(a=>`
-    <div class="alarme-item">
-      <span class="alarme-ico">💊</span>
-      <div class="alarme-info"><h4>${a.nome}</h4><p>${a.hora}</p></div>
-    </div>
-  `).join('');
+  if(!BA)return;
+  const meds=D.dados?.[BA]?.medicamentos?.filter(m=>m.activo)||[];
+  let als=[];meds.forEach(m=>m.horas.forEach(h=>als.push({n:m.nome,d:m.dose,h})));als.sort((a,b)=>a.h.localeCompare(b.h));
+  const el=document.getElementById('lista-al');if(!el)return;
+  el.innerHTML=als.length?als.map(a=>`<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--bege2);border-radius:10px;margin-bottom:6px">
+    <span style="font-size:1.1rem">💊</span><div style="flex:1"><div style="font-size:0.84rem;font-weight:700">${a.n}</div><div style="font-size:0.74rem;color:var(--cinza)">${a.d||''} · <strong>${a.h}</strong></div></div>
+  </div>`).join(''):'<div class="empty"><span class="ico">🔕</span><p>Sem alarmes</p></div>';
+  const eli=document.getElementById('al-ini');
+  if(eli)eli.innerHTML=als.slice(0,3).map(a=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bege2);border-radius:10px;margin-bottom:5px">
+    <span>💊</span><div><div style="font-size:0.8rem;font-weight:700">${a.n}</div><div style="font-size:0.72rem;color:var(--cinza)">${a.h}</div></div>
+  </div>`).join('')||'<div class="empty"><span class="ico">😴</span><p>Sem alarmes</p></div>';
 }
-
-function iniciarVerificacaoAlarmes(){
-  if(estadoApp.intervaloAlarmes)clearInterval(estadoApp.intervaloAlarmes);
-  estadoApp.intervaloAlarmes=setInterval(verificarAlarmes,30000);
-  verificarAlarmes();
-}
-
-function verificarAlarmes(){
-  if(!estadoApp.bebeActivo||!estadoApp.sessao)return;
-  const agora=new Date();
-  const horaAgora=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
-  const u=getUserData();
-  const meds=u.dados[estadoApp.bebeActivo]?.medicamentos||[];
-  meds.filter(m=>m.activo).forEach(m=>{
-    m.horarios.forEach(h=>{
-      if(h===horaAgora){
-        const chave='alarme_'+m.id+'_'+horaAgora+'_'+agora.toDateString();
-        if(!localStorage.getItem(chave)){
-          localStorage.setItem(chave,'1');
-          dispararAlarme(m.nome,m.dose,h);
+function iniciarAlarmes(){
+  if(INT_AL)clearInterval(INT_AL);INT_AL=setInterval(()=>{
+    if(!BA)return;const ag=new Date();
+    const ha=ag.getHours().toString().padStart(2,'0')+':'+ag.getMinutes().toString().padStart(2,'0');
+    const meds=D.dados?.[BA]?.medicamentos?.filter(m=>m.activo)||[];
+    meds.forEach(m=>m.horas.forEach(h=>{
+      if(h===ha){const k='al_'+m.id+'_'+ha+'_'+ag.toDateString();
+        if(!sessionStorage.getItem(k)){sessionStorage.setItem(k,'1');
+          document.getElementById('ap-t').textContent='💊 '+m.nome;document.getElementById('ap-d').textContent=m.dose||'Hora da toma';
+          document.getElementById('ap').classList.add('show');setTimeout(()=>document.getElementById('ap').classList.remove('show'),10000);
+          if('Notification' in window&&Notification.permission==='granted')new Notification('🌿 Bebé Saudável',{body:'💊 '+m.nome+(m.dose?' — '+m.dose:'')});
         }
       }
-    });
-  });
+    }));
+    // Agua
+    const b=D.bebes?.find(b=>b.id===BA);
+    if(b&&calcAge(b.dn).m>=6){const h=ag.getHours();if(h>=7&&h<=21&&ag.getMinutes()===0&&h%2===0){
+      const k='agua_'+h+'_'+ag.toDateString();
+      if(!sessionStorage.getItem(k)){sessionStorage.setItem(k,'1');
+        document.getElementById('ap-t').textContent='💧 Água para o bebé!';document.getElementById('ap-d').textContent='Oferece água ao teu bebé.';document.getElementById('ap').classList.add('show');setTimeout(()=>document.getElementById('ap').classList.remove('show'),8000);}
+    }}
+  },30000);
 }
 
-function dispararAlarme(nome,dose,hora){
-  const popup=document.getElementById('alarme-popup');
-  document.getElementById('alarme-titulo').textContent='💊 Hora do medicamento! ('+hora+')';
-  document.getElementById('alarme-desc').textContent=nome+(dose?' — '+dose:'');
-  popup.classList.add('show');
-  // Notificação do browser
-  if('Notification' in window&&Notification.permission==='granted'){
-    new Notification('💊 Bebé Saudável',{body:nome+(dose?' — '+dose:''),icon:'./icon-192x192.png'});
-  } else if('Notification' in window&&Notification.permission!=='denied'){
-    Notification.requestPermission();
-  }
-  setTimeout(()=>popup.classList.remove('show'),10000);
+// ===== MAPA =====
+function pedirLoc(){
+  const btn=document.getElementById('btn-loc'),st=document.getElementById('loc-st');
+  if(!navigator.geolocation){st.textContent='Geolocalização não suportada.';return;}
+  btn.textContent='📍 A localizar...';btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:lat,longitude:lng}=pos.coords;btn.textContent='✅ Localização obtida';
+    const url=`https://www.google.com/maps/search/hospital+clinica+centro+saude/@${lat},${lng},13z`;
+    document.getElementById('lista-uni').innerHTML=`
+      <div style="background:var(--bege2);border-radius:11px;padding:13px;margin-bottom:10px;">
+        <p style="font-size:0.84rem;font-weight:700;color:var(--g1)">📍 Localização obtida!</p>
+        <a href="${url}" target="_blank" style="display:inline-block;margin-top:8px;padding:10px 15px;background:var(--g3);color:#fff;border-radius:10px;text-decoration:none;font-weight:800;font-size:0.82rem">🗺️ Ver Unidades no Google Maps</a>
+      </div>
+      <div style="border:2px solid var(--cinza3);border-radius:11px;padding:12px;display:flex;gap:9px;margin-bottom:8px;background:#fff">
+        <span style="font-size:1.4rem">🏥</span><div><div style="font-weight:700;font-size:0.86rem">Hospital Central de Maputo</div>
+        <div style="font-size:0.74rem;color:var(--cinza)">Urgência Pediátrica 24h</div>
+        <a href="tel:+258213014300" style="font-size:0.76rem;color:var(--g3);font-weight:700">📞 +258 21 301 430</a></div></div>
+      <div style="border:2px solid var(--cinza3);border-radius:11px;padding:12px;display:flex;gap:9px;background:#fff">
+        <span style="font-size:1.4rem">📞</span><div><div style="font-weight:700;font-size:0.86rem">MISAU — Linha Verde</div>
+        <a href="tel:1499" style="font-size:1.2rem;color:var(--vm);font-weight:800">📞 1499</a><div style="font-size:0.72rem;color:var(--cinza)">Gratuito · 24h</div></div></div>`;
+  },()=>{btn.textContent='📍 Encontrar Unidades Próximas';btn.disabled=false;st.textContent='Não foi possível obter localização.';});
 }
-
-function fecharAlarmePopup(){document.getElementById('alarme-popup').classList.remove('show');}
 
 // ===== PEDIATRAS =====
-const pediatras=[
-  {nome:'Dra. Ana Paula Machava',esp:'Pediatra Geral',exp:'15 anos de experiência',local:'Hospital Central de Maputo',tel:'+258 21 301 000',emoji:'👩‍⚕️',cor:'#e8f5ee'},
-  {nome:'Dr. Carlos Nhampule',esp:'Neonatologista',exp:'Especialista em recém-nascidos',local:'Clínica Cruz Azul, Maputo',tel:'+258 21 491 000',emoji:'👨‍⚕️',cor:'#e3f0fb'},
-  {nome:'Dra. Lurdes Tembe',esp:'Pediatra — Nutrição Infantil',exp:'Nutrição e crescimento',local:'H. Geral José Macamo, Maputo',tel:'+258 21 460 000',emoji:'👩‍⚕️',cor:'#fff3e0'},
-  {nome:'Dr. Hélio Mondlane',esp:'Pediatra',exp:'Beira e Sofala',local:'Hospital Central da Beira',tel:'+258 23 320 000',emoji:'👨‍⚕️',cor:'#fce4ec'},
-  {nome:'Dra. Fátima Cossa',esp:'Pediatra',exp:'Norte de Moçambique',local:'Hospital Central de Nampula',tel:'+258 26 212 000',emoji:'👩‍⚕️',cor:'#e8f5ee'},
-];
-
-function renderPediatras(){
-  const el=document.getElementById('lista-pediatras');
-  if(!el)return;
-  el.innerHTML=pediatras.map(p=>`
-    <div style="border:2px solid #e5e7eb;border-radius:14px;padding:14px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start">
-      <div style="width:48px;height:48px;border-radius:50%;background:${p.cor};display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">${p.emoji}</div>
-      <div>
-        <div style="font-weight:700;font-size:0.92rem">${p.nome}</div>
-        <div style="font-size:0.78rem;color:var(--cinza);margin-top:2px">${p.esp}</div>
-        <div style="font-size:0.75rem;color:var(--verde);font-weight:600;margin-top:3px">📍 ${p.local}</div>
-        <a href="tel:${p.tel}" style="display:inline-block;margin-top:7px;padding:5px 12px;background:var(--verde);color:#fff;border-radius:8px;font-size:0.76rem;font-weight:700;text-decoration:none">📞 ${p.tel}</a>
-      </div>
-    </div>
-  `).join('');
+function renderPeds(){
+  const el=document.getElementById('lista-ped');if(!el)return;
+  const ps=[
+    {n:'Dra. Ana Paula Machava',e:'Pediatra Geral',l:'Hospital Central de Maputo',t:'+258 21 301 000'},
+    {n:'Dr. Carlos Nhampule',e:'Neonatologista',l:'Clínica Cruz Azul, Maputo',t:'+258 21 491 000'},
+    {n:'Dra. Lurdes Tembe',e:'Nutrição Infantil',l:'H. Geral José Macamo',t:'+258 21 460 000'},
+    {n:'Dr. Hélio Mondlane',e:'Pediatra — Beira',l:'Hospital Central da Beira',t:'+258 23 320 000'},
+    {n:'Dra. Fátima Cossa',e:'Pediatra — Nampula',l:'Hospital Central de Nampula',t:'+258 26 212 000'},
+  ];
+  el.innerHTML=ps.map((p,i)=>{const cls=['#e8f5ee','#e3f0fb','#fff3e0','#fce4ec','#e8f5ee'];
+    return`<div style="border:2px solid var(--cinza3);border-radius:12px;padding:12px;margin-bottom:9px;display:flex;gap:10px;background:#fff">
+    <div style="width:42px;height:42px;border-radius:50%;background:${cls[i%5]};display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👨‍⚕️</div>
+    <div><div style="font-weight:800;font-size:0.88rem">${p.n}</div>
+    <div style="font-size:0.74rem;color:var(--cinza);margin-top:1px">${p.e}</div>
+    <div style="font-size:0.72rem;color:var(--g3);font-weight:700;margin-top:2px">📍 ${p.l}</div>
+    <a href="tel:${p.t}" style="display:inline-block;margin-top:5px;padding:4px 10px;background:var(--g3);color:#fff;border-radius:7px;font-size:0.72rem;font-weight:800;text-decoration:none">📞 ${p.t}</a></div>
+  </div>`;}).join('');
 }
 
-// ===== NAVEGAÇÃO =====
-function showSection(id){
+// ===== NAV =====
+function showSec(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
-  event.target.classList.add('active');
   if(id==='crescimento')desenharCurva();
-  if(id==='vacinas'&&estadoApp.bebeActivo)renderVacinas(estadoApp.bebeActivo);
-  if(id==='medicacao'&&estadoApp.bebeActivo)renderMedicamentos(estadoApp.bebeActivo);
+  if(id==='vacinas'&&BA)renderVacs(BA);
+  if(id==='medicacao'&&BA){renderMeds(BA);renderAlarmes();}
+  if(id==='consultas'&&BA)renderCons(BA);
+  if(id==='alimentacao'&&BA){renderGuia(BA);renderRecs();}
+  if(id==='pagamento')checkTrial();
 }
 
-// ===== TOAST =====
-function mostrarToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-// Pedir permissão de notificações
-if('Notification' in window && Notification.permission==='default'){
-  setTimeout(()=>Notification.requestPermission(),3000);
-}
-</script>
-</body>
-</html>
+// ===== UTILS =====
+function abrirModal(id){document.getElementById(id).classList.add('open');}
+function fecharModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e
