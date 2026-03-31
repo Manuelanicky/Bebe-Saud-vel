@@ -304,11 +304,13 @@ canvas{max-width:100%;border-radius:9px;}
       <div class="pay-card"><h3>💳 O teu Plano</h3><p id="pay-status">A carregar...</p></div>
       <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">💳</div><h2>Activar Plano Anual</h2></div>
         <p style="font-size:0.84rem;color:var(--cinza);margin-bottom:14px;line-height:1.5">Por apenas <strong style="color:var(--g1);font-size:1.1rem">500 MZN/ano</strong> tens acesso completo.</p>
-        <a href="LINK_PAYSUITE_AQUI" target="_blank" class="pay-btn">💳 Pagar com Paysuite (M-Pesa / e-Mola)</a>
+        <a href="https://paysuite.tech/checkout/01kn2ydbq041k2dq228m2bted4" target="_blank" class="pay-btn" style="margin-bottom:8px">📱 Pagar com M-Pesa — 500 MZN</a>
+        <a href="https://paysuite.tech/checkout/01kn2xz56fah9jrnt44cvg6kp0" target="_blank" class="pay-btn" style="background:linear-gradient(135deg,#1a5fa0,#2478c8)">💙 Pagar com e-Mola — 500 MZN</a>
         <div style="background:var(--bege2);border-radius:11px;padding:13px;font-size:0.78rem;color:var(--cinza);line-height:1.6;margin-top:10px">
           <strong style="color:var(--g1)">Como pagar:</strong><br>
-          1. Clica no botão acima<br>2. Escolhe M-Pesa ou e-Mola<br>3. Confirma no telemóvel<br>
-          4. Envia comprovativo para <strong>bebesaudavel.moz@gmail.com</strong><br>5. Conta activada em até 2h ✅
+          1. Clica no botão M-Pesa ou e-Mola acima<br>
+          2. Confirma o pagamento no teu telemóvel<br>
+          3. O teu plano é activado automaticamente ✅
         </div></div>
     </div>
   </main>
@@ -325,7 +327,7 @@ canvas{max-width:100%;border-radius:9px;}
   <div style="flex:1"><div style="font-size:0.9rem;font-weight:800" id="ap-t">Medicamento!</div><div style="font-size:0.76rem;opacity:0.85" id="ap-d">Hora da toma</div></div>
   <button style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 11px;border-radius:7px;cursor:pointer;font-size:0.76rem;" onclick="document.getElementById('ap').classList.remove('show')">OK ✓</button>
 </div>
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // Test the JS that will go in the app
 let BA=null, D={}, INT_AL=null;
 
@@ -1149,14 +1151,4 @@ document.addEventListener('click',function(e){
   if(sess){
     try{
       var p=JSON.parse(sess);
-      window._uid=p.uid;window._uname=p.nome;window._token=p.token||'';
-      window._D=JSON.parse(localStorage.getItem('bs_d')||'{}');
-      mostrarApp();
-    }catch(e){mostrarAuth();}
-  } else {
-    mostrarAuth();
-  }
-})();
-</script>
-</body>
-</html>
+      window._u
