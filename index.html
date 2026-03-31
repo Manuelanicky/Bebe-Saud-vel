@@ -1,1 +1,1151 @@
-wc -c /mnt/user-data/outputs/index.html && wc -l /mnt/user-data/outputs/index.html
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bebé Saudável Moçambique</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a4a24">
+<link rel="apple-touch-icon" href="icon-192x192.png">
+<style>
+:root{--g1:#0a4a24;--g2:#0d6030;--g3:#10773c;--g4:#2da05a;--g5:#4cc47a;--bege:#faf8f2;--bege2:#f2ede0;--am:#e8920a;--am2:#ffc93c;--vm:#c42020;--cinza:#5a6070;--cinza2:#9ca3af;--cinza3:#e5e7eb;--w:#ffffff;--sh:0 2px 20px rgba(10,74,36,0.10);--r:16px;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bege);color:#1a1a1a;min-height:100vh;}
+#loading{position:fixed;inset:0;background:#0a4a24;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;color:#fff;}
+.ld-ico{font-size:3.5rem;animation:ld .8s ease-in-out infinite;}
+@keyframes ld{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+#loading h2{font-family:Georgia,serif;font-size:1.6rem;margin-top:12px;}
+#loading p{font-size:0.78rem;opacity:0.7;margin-top:5px;}
+#auth-screen{min-height:100vh;display:none;align-items:center;justify-content:center;background:linear-gradient(160deg,#050f08,#0a4a24 50%,#0d6030);padding:18px;}
+.abox{background:#fff;border-radius:26px;padding:32px 24px;width:100%;max-width:400px;box-shadow:0 40px 100px rgba(0,0,0,0.4);max-height:96vh;overflow-y:auto;}
+.alogo{text-align:center;margin-bottom:20px;}
+.alogo span{font-size:3rem;display:block;}
+.alogo h1{font-family:Georgia,serif;font-size:2rem;color:var(--g1);line-height:1;}
+.alogo p{font-size:0.75rem;color:var(--cinza);margin-top:4px;}
+.trial-badge{background:linear-gradient(135deg,var(--am),var(--am2));color:#fff;border-radius:12px;padding:10px 14px;text-align:center;margin-bottom:18px;font-size:0.82rem;font-weight:700;}
+.trial-badge span{display:block;font-size:1.3rem;font-weight:800;}
+.atabs{display:flex;background:var(--bege2);border-radius:12px;padding:3px;margin-bottom:16px;}
+.atab{flex:1;padding:9px;border:none;background:none;font-size:0.84rem;font-weight:700;cursor:pointer;border-radius:10px;transition:all .2s;color:var(--cinza);}
+.atab.active{background:#fff;color:var(--g1);box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:0.72rem;font-weight:800;color:var(--cinza);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-size:0.9rem;transition:border-color .2s;background:#fff;font-family:inherit;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--g4);}
+.btn-p{width:100%;padding:13px;border:none;border-radius:13px;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;font-size:0.95rem;font-weight:800;cursor:pointer;transition:all .2s;}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(10,74,36,0.30);}
+.btn-p:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.aform{display:none;}
+.aform.active{display:block;}
+.aerr{background:#fdecea;color:#8b1a1a;border-radius:9px;padding:9px 12px;font-size:0.8rem;margin-bottom:11px;display:none;}
+#app-screen{display:none;}
+.app-header{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.2);}
+.menu-btn{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-info h1{font-family:Georgia,serif;font-size:1.2rem;line-height:1;}
+.hdr-info p{font-size:0.7rem;opacity:0.8;margin-top:1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;flex-shrink:0;}
+.trial-hdr{background:rgba(232,146,10,0.3);border:1px solid rgba(255,200,60,0.5);border-radius:8px;padding:3px 8px;font-size:0.68rem;font-weight:800;color:#ffc93c;}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;}
+.sidebar-overlay.open{display:block;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:82%;max-width:300px;background:linear-gradient(180deg,var(--g1) 0%,#0a3a1c 100%);z-index:201;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto;}
+.sidebar.open{transform:translateX(0);}
+.sb-header{padding:30px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sb-header h2{font-family:Georgia,serif;color:#fff;font-size:1.5rem;}
+.sb-header p{color:rgba(255,255,255,0.6);font-size:0.76rem;margin-top:3px;}
+.sb-bebe{background:rgba(255,255,255,0.08);border-radius:12px;padding:12px;margin:16px 20px 0;}
+.sb-bebe p{color:rgba(255,255,255,0.6);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+.bchip{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;transition:all .2s;font-size:0.84rem;font-weight:700;color:rgba(255,255,255,0.75);}
+.bchip.active,.bchip:hover{background:rgba(255,255,255,0.15);color:#fff;}
+.bchip-add{border:2px dashed rgba(255,255,255,0.25);border-radius:9px;padding:7px 10px;cursor:pointer;color:rgba(255,255,255,0.5);font-size:0.78rem;text-align:center;margin-top:4px;}
+.sb-nav{flex:1;padding:14px 12px;}
+.sb-section{color:rgba(255,255,255,0.4);font-size:0.66rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:8px 10px 4px;}
+.sb-btn{width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border:none;background:none;color:rgba(255,255,255,0.75);font-size:0.88rem;font-weight:700;cursor:pointer;border-radius:11px;text-align:left;transition:all .2s;margin-bottom:2px;font-family:inherit;}
+.sb-btn:hover,.sb-btn.active{background:rgba(255,255,255,0.12);color:#fff;}
+.sb-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.1);}
+.sb-logout{width:100%;padding:10px;border:2px solid rgba(255,255,255,0.2);border-radius:11px;background:none;color:rgba(255,255,255,0.7);font-size:0.84rem;font-weight:700;cursor:pointer;font-family:inherit;}
+main{max-width:520px;margin:0 auto;padding:14px 13px 90px;}
+.section{display:none;}
+.section.active{display:block;}
+.card{background:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:13px;animation:fu .3s ease both;}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card-hdr{display:flex;align-items:center;gap:9px;margin-bottom:13px;padding-bottom:10px;border-bottom:2px solid var(--bege2);}
+.card-hdr h2{font-family:Georgia,serif;font-size:1.05rem;color:var(--g1);}
+.cico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.btn-save{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;font-size:0.9rem;font-weight:800;cursor:pointer;transition:all .2s;margin-top:5px;font-family:inherit;}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(10,74,36,0.25);}
+.ro{flex:1;min-width:65px;}
+.ro input{display:none;}
+.ro label{display:block;text-align:center;padding:8px 4px;border:2px solid var(--cinza3);border-radius:9px;font-size:0.74rem;font-weight:700;cursor:pointer;transition:all .2s;color:var(--cinza);}
+.ro input:checked+label{border-color:var(--g4);background:#e8f5ee;color:var(--g1);}
+.radio-group{display:flex;gap:6px;flex-wrap:wrap;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px;}
+.stat-box{background:var(--bege2);border-radius:13px;padding:12px;text-align:center;}
+.stat-val{font-family:Georgia,serif;font-size:1.5rem;color:var(--g1);font-weight:700;line-height:1;}
+.stat-lbl{font-size:0.65rem;color:var(--cinza);margin-top:3px;text-transform:uppercase;letter-spacing:0.04em;}
+.stat-sub{font-size:0.7rem;color:var(--g4);font-weight:700;margin-top:2px;}
+.resultado{border-radius:11px;padding:12px 14px;margin-top:9px;font-size:0.85rem;line-height:1.55;display:none;}
+.resultado.verde{background:#e8f5ee;color:#1a5c34;border-left:5px solid var(--g3);}
+.resultado.amarelo{background:#fff8e1;color:#7a5500;border-left:5px solid var(--am);}
+.resultado.vermelho{background:#fdecea;color:#8b1a1a;border-left:5px solid var(--vm);}
+.vi{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;margin-bottom:6px;border:2px solid var(--cinza3);transition:all .2s;cursor:pointer;}
+.vi.feita{background:#e8f5ee;border-color:#a8d8b8;}
+.vi.pendente{background:#fff8e1;border-color:#f5c842;}
+.vi.atrasada{background:#fdecea;border-color:#f5a0a0;}
+.vi-info h4{font-size:0.82rem;font-weight:700;}
+.vi-info p{font-size:0.7rem;color:var(--cinza);}
+.vbadge{margin-left:auto;padding:3px 8px;border-radius:16px;font-size:0.65rem;font-weight:800;flex-shrink:0;}
+.med-card{border:2px solid var(--cinza3);border-radius:12px;padding:12px;margin-bottom:8px;position:relative;}
+.med-horas{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.med-hora{background:var(--bege2);padding:3px 8px;border-radius:6px;font-size:0.72rem;font-weight:700;color:var(--g1);}
+.del-btn{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:0.9rem;color:var(--cinza2);}
+.cons-item{border-left:4px solid var(--g4);padding:10px 12px;background:var(--bege2);border-radius:0 10px 10px 0;margin-bottom:8px;}
+.receita-card{border-radius:13px;overflow:hidden;margin-bottom:11px;box-shadow:var(--sh);}
+.rec-hdr{padding:12px 14px;font-weight:800;font-size:0.88rem;display:flex;align-items:center;gap:7px;}
+.rec-body{padding:12px 14px;background:#fff;}
+.triagem-screen{position:fixed;inset:0;background:var(--bege);z-index:300;flex-direction:column;overflow:hidden;display:none;}
+.tri-header{background:linear-gradient(135deg,var(--g1),var(--g3));padding:16px 18px;color:#fff;}
+.tri-header h2{font-family:Georgia,serif;font-size:1.3rem;}
+.tri-header p{font-size:0.76rem;opacity:0.85;margin-top:3px;}
+.tri-progress{height:5px;background:rgba(255,255,255,0.2);margin-top:12px;border-radius:3px;}
+.tri-bar{height:100%;background:var(--am2);border-radius:3px;transition:width .4s ease;}
+.tri-body{flex:1;overflow-y:auto;padding:20px 16px;}
+.tri-pergunta h3{font-family:Georgia,serif;font-size:1.4rem;color:var(--g1);margin-bottom:6px;line-height:1.3;}
+.tri-opcoes{display:flex;flex-direction:column;gap:10px;}
+.tri-opt{padding:14px 16px;border:2px solid var(--cinza3);border-radius:14px;cursor:pointer;transition:all .2s;font-size:0.92rem;font-weight:700;text-align:left;background:#fff;display:flex;align-items:center;gap:10px;font-family:inherit;}
+.tri-opt:hover,.tri-opt.sel{border-color:var(--g4);background:#e8f5ee;color:var(--g1);}
+.tri-opt-ico{font-size:1.4rem;flex-shrink:0;}
+.tri-footer{padding:14px 16px;background:#fff;border-top:2px solid var(--cinza3);}
+.btn-tri{width:100%;padding:13px;border:none;border-radius:13px;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;}
+.btn-voltar{width:100%;padding:12px;border:2px solid var(--cinza3);border-radius:13px;background:none;font-size:0.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;color:var(--cinza);font-family:inherit;}
+.tri-resultado{padding:20px 0;}
+.res-card{border-radius:20px;padding:22px 18px;margin-bottom:14px;text-align:center;}
+.res-card.urgente{background:linear-gradient(135deg,#fdecea,#ffd5d5);border:3px solid var(--vm);}
+.res-card.atencao{background:linear-gradient(135deg,#fff8e1,#fff3cd);border:3px solid var(--am);}
+.res-card.casa{background:linear-gradient(135deg,#e8f5ee,#d4edd9);border:3px solid var(--g4);}
+.res-ico{font-size:3.5rem;display:block;margin-bottom:10px;}
+.res-card h3{font-family:Georgia,serif;font-size:1.5rem;margin-bottom:8px;}
+.res-card p{font-size:0.84rem;line-height:1.6;}
+.res-sintomas{background:rgba(0,0,0,0.05);border-radius:11px;padding:12px;margin-top:14px;text-align:left;}
+.res-sintomas h4{font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+.res-sintomas li{font-size:0.8rem;padding:3px 0;list-style:none;padding-left:18px;position:relative;}
+.res-sintomas li::before{content:'→';position:absolute;left:0;font-weight:800;}
+.btn-urgente{display:block;width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--vm),#e53030);color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer;text-decoration:none;text-align:center;margin-top:12px;}
+.agua-box{background:linear-gradient(135deg,#e3f0fb,#d0e4f5);border-radius:13px;padding:13px;display:flex;align-items:center;gap:11px;margin-bottom:13px;border:2px solid #a8c8e8;}
+.agua-box p{font-size:0.8rem;color:#1a4a7a;line-height:1.4;}
+.trial-warn{background:linear-gradient(135deg,#fff8e1,#fff3cd);border:2px solid var(--am);border-radius:14px;padding:14px;margin-bottom:13px;}
+.trial-warn h4{font-size:0.9rem;font-weight:800;color:#7a5500;margin-bottom:4px;}
+.trial-warn p{font-size:0.78rem;color:#7a5500;line-height:1.4;}
+.pay-card{background:linear-gradient(135deg,#e8f5ee,#d4edd9);border-radius:16px;padding:18px;border:2px solid var(--g4);margin-bottom:13px;}
+.pay-card h3{font-family:Georgia,serif;color:var(--g1);font-size:1.1rem;margin-bottom:8px;}
+.pay-card p{font-size:0.82rem;color:var(--cinza);line-height:1.5;}
+.pay-btn{display:block;text-align:center;margin-top:12px;padding:11px 20px;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;border-radius:11px;font-weight:800;font-size:0.88rem;text-decoration:none;}
+.ap{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;padding:13px 16px;z-index:500;display:none;align-items:center;gap:9px;}
+.ap.show{display:flex;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) scale(0.9);background:#1a1a1a;color:#fff;padding:10px 16px;border-radius:11px;font-size:0.8rem;font-weight:700;z-index:600;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) scale(1);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:400;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:22px 22px 0 0;padding:22px 18px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+.modal-handle{width:34px;height:4px;background:var(--cinza3);border-radius:2px;margin:0 auto 14px;}
+.modal h3{font-family:Georgia,serif;font-size:1.15rem;color:var(--g1);margin-bottom:14px;}
+.modal-close{float:right;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--cinza);margin-top:-2px;}
+.empty{text-align:center;padding:22px 12px;color:var(--cinza);}
+.empty .ico{font-size:2rem;display:block;margin-bottom:5px;}
+.empty p{font-size:0.82rem;}
+.disclaimer{background:#fff3e0;border-radius:10px;padding:10px 12px;font-size:0.73rem;color:#7a5500;border-left:4px solid var(--am);margin-top:7px;}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font-size:0.68rem;font-weight:800;}
+canvas{max-width:100%;border-radius:9px;}
+</style>
+</head>
+<body>
+<div id="loading"><span class="ld-ico">🌿</span><h2>Bebé Saudável</h2><p>MOÇAMBIQUE</p></div>
+<div id="auth-screen">
+  <div class="abox">
+    <div class="alogo"><span>🌿</span><h1>Bebé Saudável</h1><p>Cuidar com amor · Moçambique 🇲🇿</p></div>
+    <div class="trial-badge">🎁 Experimenta GRÁTIS durante<span>7 DIAS</span>Depois apenas 500 MZN/ano</div>
+    <div class="atabs">
+      <button class="atab active" onclick="swAuth('l')" id="tab-l">Entrar</button>
+      <button class="atab" onclick="swAuth('reg')" id="tab-reg">Criar Conta</button>
+    </div>
+    <div class="aerr" id="aerr"></div>
+    <div class="aform active" id="form-l">
+      <div class="fg"><label>Email</label><input type="email" id="li-e" placeholder="email@exemplo.com"></div>
+      <div class="fg"><label>Password</label><input type="password" id="li-p" placeholder="••••••••"></div>
+      <button class="btn-p" id="btn-li" onclick="fazerLogin()">Entrar →</button>
+    </div>
+    <div class="aform" id="form-reg">
+      <div class="fg"><label>Nome completo</label><input type="text" id="rg-n" placeholder="Ana Maria Nicky"></div>
+      <div class="fg"><label>Email</label><input type="email" id="rg-e" placeholder="email@exemplo.com"></div>
+      <div class="fg"><label>Telefone (M-Pesa)</label><input type="tel" id="rg-t" placeholder="84 123 4567"></div>
+      <div class="fg"><label>Password</label><input type="password" id="rg-p" placeholder="Minimo 6 caracteres"></div>
+      <p style="font-size:0.74rem;color:var(--cinza);margin-bottom:8px;line-height:1.5">✅ 7 dias gratis → depois 500 MZN/ano</p>
+      <button class="btn-p" id="btn-rg" onclick="fazerRegisto()">Começar os 7 Dias Grátis →</button>
+    </div>
+  </div>
+</div>
+<div id="app-screen">
+  <div class="app-header">
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="hdr-info"><h1>🌿 Bebé Saudável</h1><p id="hdr-sub">Moçambique</p></div>
+    <div class="hdr-right"><span class="trial-hdr" id="trial-hdr">⏳</span><div class="avatar" id="user-av">M</div></div>
+  </div>
+  <div class="sidebar-overlay" id="sb-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header"><h2>🌿 Bebé Saudável</h2><p id="sb-nome">Olá!</p></div>
+    <div class="sb-bebe"><p>Os meus bebés</p><div id="sb-bebes"></div><div class="bchip-add" onclick="abrirModal('modal-bebe');toggleSidebar()">➕ Adicionar bebé</div></div>
+    <div class="sb-nav">
+      <div class="sb-section">Principal</div>
+      <button class="sb-btn" onclick="showSec('inicio');toggleSidebar()"><span class="sb-ico" style="background:#1a5c3420">🏠</span>Início</button>
+      <button class="sb-btn" onclick="showTri();toggleSidebar()"><span class="sb-ico" style="background:#ff333320">🩺</span>Como está o bebé?</button>
+      <div class="sb-section">Saúde</div>
+      <button class="sb-btn" onclick="showSec('gestacao');toggleSidebar()"><span class="sb-ico" style="background:#fce4ec50">🤰</span>Gestação</button>
+      <button class="sb-btn" onclick="showSec('perinatal');toggleSidebar()"><span class="sb-ico" style="background:#e3f0fb50">👶</span>Perinatal</button>
+      <button class="sb-btn" onclick="showSec('crescimento');toggleSidebar()"><span class="sb-ico" style="background:#e8f5ee50">📏</span>Crescimento</button>
+      <button class="sb-btn" onclick="showSec('vacinas');toggleSidebar()"><span class="sb-ico" style="background:#fdecea50">💉</span>Vacinas PAV</button>
+      <button class="sb-btn" onclick="showSec('consultas');toggleSidebar()"><span class="sb-ico" style="background:#e3f0fb50">🩺</span>Consultas</button>
+      <button class="sb-btn" onclick="showSec('medicacao');toggleSidebar()"><span class="sb-ico" style="background:#fff8e150">💊</span>Medicação</button>
+      <div class="sb-section">Nutrição</div>
+      <button class="sb-btn" onclick="showSec('alimentacao');toggleSidebar()"><span class="sb-ico" style="background:#e8f5ee50">🥗</span>Alimentação</button>
+      <div class="sb-section">Localização</div>
+      <button class="sb-btn" onclick="showSec('mapa');toggleSidebar()"><span class="sb-ico" style="background:#e3f0fb50">📍</span>Saúde Próxima</button>
+      <button class="sb-btn" onclick="showSec('pediatras');toggleSidebar()"><span class="sb-ico" style="background:#e8f5ee50">👨‍⚕️</span>Pediatras</button>
+      <div class="sb-section">Conta</div>
+      <button class="sb-btn" onclick="showSec('pagamento');toggleSidebar()"><span class="sb-ico" style="background:#fff8e150">💳</span>Pagamento / Plano</button>
+    </div>
+    <div class="sb-footer"><button class="sb-logout" onclick="fazerLogout()">🚪 Sair da conta</button></div>
+  </div>
+  <div class="triagem-screen" id="triagem-screen">
+    <div class="tri-header"><h2>🩺 Como está o bebé?</h2><p>Responde para te aconselharmos</p><div class="tri-progress"><div class="tri-bar" id="tri-bar" style="width:0%"></div></div></div>
+    <div class="tri-body" id="tri-body"></div>
+    <div class="tri-footer" id="tri-footer"><button class="btn-tri" onclick="triNext()">Próxima →</button></div>
+  </div>
+  <main>
+    <div class="section active" id="sec-inicio">
+      <div id="trial-warn-box" style="display:none"><div class="trial-warn"><h4>⏳ Período de teste</h4><p>Activa por 500 MZN/ano para continuar.</p><button class="btn-save" style="margin-top:10px" onclick="showSec('pagamento')">💳 Activar Agora</button></div></div>
+      <div id="agua-box" style="display:none"><div class="agua-box"><span style="font-size:1.8rem">💧</span><p><strong>Hora de beber água!</strong><br>O teu bebé tem mais de 6 meses. Oferece água ao longo do dia.</p></div></div>
+      <div class="card" style="background:linear-gradient(135deg,#fdecea,#ffd5d5);border:2px solid var(--vm)">
+        <div style="display:flex;align-items:center;gap:12px;"><span style="font-size:2.5rem">🩺</span><div><h3 style="font-family:Georgia,serif;color:var(--vm);font-size:1.05rem">Como está o teu bebé hoje?</h3><p style="font-size:0.78rem;color:#8b1a1a;margin-top:2px">Toca para avaliar os sintomas</p></div></div>
+        <button class="btn-save" style="background:linear-gradient(135deg,var(--vm),#e53030);margin-top:12px" onclick="showTri()">🩺 Avaliar Sintomas Agora</button>
+      </div>
+      <div class="card" id="card-bem"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">🌱</div><h2>Bem-vinda!</h2></div><p style="font-size:0.84rem;color:var(--cinza);line-height:1.6">Adiciona o teu bebé para começar.</p><button class="btn-save" style="margin-top:11px" onclick="abrirModal('modal-bebe')">➕ Adicionar Bebé</button></div>
+      <div id="resumo" style="display:none">
+        <div class="stat-grid" id="stats"></div>
+        <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">⏰</div><h2>Próximos Alarmes</h2></div><div id="al-ini"><div class="empty"><span class="ico">😴</span><p>Sem alarmes</p></div></div></div>
+        <div class="card"><div class="card-hdr"><div class="cico" style="background:#fdecea">💉</div><h2>Vacinas Pendentes</h2></div><div id="vac-ini"></div></div>
+      </div>
+    </div>
+    <div class="section" id="sec-gestacao">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fce4ec">🤰</div><h2>Dados da Gestação</h2></div>
+        <div class="row2"><div class="fg"><label>Duração (semanas)</label><input type="number" id="g-sem" placeholder="39"></div><div class="fg"><label>Nº consultas pré-natal</label><input type="number" id="g-con" placeholder="6"></div></div>
+        <div class="fg"><label>Tipo</label><div class="radio-group"><div class="ro"><input type="radio" name="gt" id="gt1" value="normal"><label for="gt1">🟢 Normal</label></div><div class="ro"><input type="radio" name="gt" id="gt2" value="risco"><label for="gt2">🔴 Alto Risco</label></div><div class="ro"><input type="radio" name="gt" id="gt3" value="gemelar"><label for="gt3">👥 Gemelar</label></div></div></div>
+        <div class="fg"><label>Observações</label><textarea id="g-obs" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:inherit;font-size:0.88rem;min-height:70px;resize:vertical;"></textarea></div>
+        <button class="btn-save" onclick="salvarGestacao()">💾 Guardar</button></div>
+    </div>
+    <div class="section" id="sec-perinatal">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e3f0fb">👶</div><h2>Dados Perinatais</h2></div>
+        <div class="row2"><div class="fg"><label>Data nascimento</label><input type="date" id="p-dn"></div><div class="fg"><label>Hora</label><input type="time" id="p-hora"></div></div>
+        <div class="row3"><div class="fg"><label>Peso (kg)</label><input type="number" id="p-p" step="0.01" placeholder="3.25"></div><div class="fg"><label>Comprimento (cm)</label><input type="number" id="p-c" step="0.1" placeholder="50"></div><div class="fg"><label>Per. Craniano (cm)</label><input type="number" id="p-cr" step="0.1" placeholder="34"></div></div>
+        <div class="row2"><div class="fg"><label>Idade gestacional (sem.)</label><input type="number" id="p-ig" placeholder="39"></div><div class="fg"><label>Local</label><select id="p-loc" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:inherit;"><option value="">Seleccionar</option><option value="maternidade">🏥 Maternidade</option><option value="casa">🏠 Em casa</option><option value="caminho">🚗 A caminho</option></select></div></div>
+        <div class="fg"><label>Tipo de parto</label><div class="radio-group"><div class="ro"><input type="radio" name="pp" id="pp1" value="normal"><label for="pp1">Natural</label></div><div class="ro"><input type="radio" name="pp" id="pp2" value="cesariana"><label for="pp2">Cesária</label></div><div class="ro"><input type="radio" name="pp" id="pp3" value="pelvico"><label for="pp3">Pélvico</label></div><div class="ro"><input type="radio" name="pp" id="pp4" value="ventosa"><label for="pp4">Ventosa</label></div></div></div>
+        <div class="fg"><label>Aleitamento</label><div class="radio-group"><div class="ro"><input type="radio" name="pal" id="pa1" value="peito" onchange="chkFormula()"><label for="pa1">🤱 Peito</label></div><div class="ro"><input type="radio" name="pal" id="pa2" value="formula" onchange="chkFormula()"><label for="pa2">🍼 Fórmula</label></div><div class="ro"><input type="radio" name="pal" id="pa3" value="misto" onchange="chkFormula()"><label for="pa3">🔀 Misto</label></div></div></div>
+        <div id="formula-box" style="display:none" class="fg"><label>Qual fórmula?</label><input type="text" id="p-f" placeholder="Ex: NAN, Aptamil..."></div>
+        <div class="fg"><label>Observações</label><textarea id="p-obs" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:inherit;font-size:0.88rem;min-height:60px;resize:vertical;"></textarea></div>
+        <button class="btn-save" onclick="salvarPerinatal()">💾 Guardar</button></div>
+    </div>
+    <div class="section" id="sec-crescimento">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">📏</div><h2>Crescimento</h2></div>
+        <div class="row3"><div class="fg"><label>Peso (kg)</label><input type="number" id="c-p" step="0.1" placeholder="7.5"></div><div class="fg"><label>Altura (cm)</label><input type="number" id="c-a" step="0.1" placeholder="68"></div><div class="fg"><label>Per. Cran.</label><input type="number" id="c-c" step="0.1" placeholder="43"></div></div>
+        <button class="btn-save" onclick="avalCresc()">📊 Avaliar</button><div class="resultado" id="res-cresc"></div></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e3f0fb">📈</div><h2>Curva OMS</h2></div><canvas id="cv" width="440" height="200"></canvas><p style="font-size:0.7rem;color:var(--cinza);margin-top:5px;text-align:center">Pontos dourados = os teus registos</p></div>
+    </div>
+    <div class="section" id="sec-vacinas">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fdecea">💉</div><h2>Calendário PAV — UNICEF Moçambique</h2></div><p style="font-size:0.76rem;color:var(--cinza);margin-bottom:11px">Toca para marcar como feita ✅</p><div id="lista-v"></div></div>
+      <div class="disclaimer">⚠️ Baseado no PAV/UNICEF Moçambique 2024. Confirma no centro de saúde.</div>
+    </div>
+    <div class="section" id="sec-consultas">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e3f0fb">🩺</div><h2>Registar Consulta</h2></div>
+        <div class="row2"><div class="fg"><label>Data</label><input type="date" id="co-d"></div><div class="fg"><label>Médico / Unidade</label><input type="text" id="co-m" placeholder="Dra. Ana, HCM"></div></div>
+        <div class="row3"><div class="fg"><label>Peso (kg)</label><input type="number" id="co-p" step="0.1"></div><div class="fg"><label>Altura (cm)</label><input type="number" id="co-a" step="0.1"></div><div class="fg"><label>Temp (°C)</label><input type="number" id="co-t" step="0.1"></div></div>
+        <div class="fg"><label>Observações</label><textarea id="co-obs" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:inherit;min-height:65px;resize:vertical;"></textarea></div>
+        <div class="fg"><label>Receita médica</label><textarea id="co-rec" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:inherit;min-height:65px;resize:vertical;" placeholder="Ex: Paracetamol 5ml 3x/dia..."></textarea></div>
+        <button class="btn-save" onclick="salvarCons()">💾 Guardar</button></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">📋</div><h2>Histórico</h2></div><div id="lista-cons"><div class="empty"><span class="ico">🩺</span><p>Sem consultas</p></div></div></div>
+    </div>
+    <div class="section" id="sec-alimentacao">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">🥗</div><h2>Guia Alimentar</h2></div><div id="guia-alim"></div></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">👨‍🍳</div><h2>Receitas Saudáveis</h2></div><div id="lista-rec"></div></div>
+    </div>
+    <div class="section" id="sec-medicacao">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">💊</div><h2>Adicionar Medicamento</h2></div>
+        <div class="fg"><label>Nome</label><input type="text" id="m-n" placeholder="Ex: Paracetamol"></div>
+        <div class="row2"><div class="fg"><label>Dosagem</label><input type="text" id="m-d" placeholder="5ml"></div><div class="fg"><label>Duração (dias)</label><input type="number" id="m-di" placeholder="7"></div></div>
+        <div class="fg"><label>Horários (separados por vírgula)</label><input type="text" id="m-h" placeholder="08:00, 14:00, 20:00"></div>
+        <div class="fg"><label>Notas</label><input type="text" id="m-o" placeholder="Tomar com leite..."></div>
+        <button class="btn-save" onclick="addMed()">🔔 Adicionar + Alarme</button></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e3f0fb">📋</div><h2>Medicamentos Activos</h2></div><div id="lista-m"><div class="empty"><span class="ico">💊</span><p>Sem medicamentos</p></div></div></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">🔔</div><h2>Alarmes</h2></div><div id="lista-al"><div class="empty"><span class="ico">🔕</span><p>Sem alarmes</p></div></div></div>
+    </div>
+    <div class="section" id="sec-mapa">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">📍</div><h2>Unidades de Saúde</h2></div>
+        <button class="btn-save" onclick="pedirLoc()" id="btn-loc">📍 Encontrar Unidades Próximas</button>
+        <p id="loc-st" style="margin-top:8px;font-size:0.78rem;color:var(--cinza);text-align:center"></p>
+        <div id="lista-uni" style="margin-top:11px"></div></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fdecea">🚨</div><h2>Emergência — MISAU</h2></div>
+        <div style="background:#fdecea;border-radius:12px;padding:16px;text-align:center"><p style="font-size:0.8rem;color:#8b1a1a;font-weight:700">Linha Verde MISAU — Gratuita 24h</p><a href="tel:1499" style="font-size:2.2rem;font-weight:800;color:var(--vm);text-decoration:none;display:block;margin:6px 0">📞 1499</a></div></div>
+    </div>
+    <div class="section" id="sec-pediatras">
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#e8f5ee">👨‍⚕️</div><h2>Pediatras em Moçambique</h2></div><div id="lista-ped"></div></div>
+    </div>
+    <div class="section" id="sec-pagamento">
+      <div class="pay-card"><h3>💳 O teu Plano</h3><p id="pay-status">A carregar...</p></div>
+      <div class="card"><div class="card-hdr"><div class="cico" style="background:#fff8e1">💳</div><h2>Activar Plano Anual</h2></div>
+        <p style="font-size:0.84rem;color:var(--cinza);margin-bottom:14px;line-height:1.5">Por apenas <strong style="color:var(--g1);font-size:1.1rem">500 MZN/ano</strong> tens acesso completo.</p>
+        <a href="LINK_PAYSUITE_AQUI" target="_blank" class="pay-btn">💳 Pagar com Paysuite (M-Pesa / e-Mola)</a>
+        <div style="background:var(--bege2);border-radius:11px;padding:13px;font-size:0.78rem;color:var(--cinza);line-height:1.6;margin-top:10px">
+          <strong style="color:var(--g1)">Como pagar:</strong><br>
+          1. Clica no botão acima<br>2. Escolhe M-Pesa ou e-Mola<br>3. Confirma no telemóvel<br>
+          4. Envia comprovativo para <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="690b0c0b0c1a081c0d081f0c0547040613290e04080005470a0604">[email&#160;protected]</a></strong><br>5. Conta activada em até 2h ✅
+        </div></div>
+    </div>
+  </main>
+</div>
+<div class="modal-overlay" id="modal-bebe">
+  <div class="modal"><div class="modal-handle"></div><button class="modal-close" onclick="fecharModal('modal-bebe')">✕</button><h3>👶 Adicionar Bebé</h3>
+    <div class="fg"><label>Nome</label><input type="text" id="bn" placeholder="Ex: Maria Beatriz"></div>
+    <div class="row2"><div class="fg"><label>Data de nascimento</label><input type="date" id="bdn"></div><div class="fg"><label>Sexo</label><select id="bsx" style="width:100%;padding:10px 12px;border:2px solid var(--cinza3);border-radius:10px;font-family:inherit;"><option value="f">👧 Feminino</option><option value="m">👦 Masculino</option></select></div></div>
+    <button class="btn-save" onclick="addBebe()">✅ Adicionar</button></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="ap" id="ap">
+  <span style="font-size:1.5rem">💊</span>
+  <div style="flex:1"><div style="font-size:0.9rem;font-weight:800" id="ap-t">Medicamento!</div><div style="font-size:0.76rem;opacity:0.85" id="ap-d">Hora da toma</div></div>
+  <button style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 11px;border-radius:7px;cursor:pointer;font-size:0.76rem;" onclick="document.getElementById('ap').classList.remove('show')">OK ✓</button>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// Test the JS that will go in the app
+let BA=null, D={}, INT_AL=null;
+
+function mostrarApp(){
+  D=window._D||JSON.parse(localStorage.getItem('bs_d')||'{}');
+  if(!D.bebes)D.bebes=[];
+  if(!D.dados)D.dados={};
+  if(!D.plano)D.plano='trial';
+  if(!D.trialInicio)D.trialInicio=new Date().toISOString();
+  var ld=document.getElementById('loading');
+  var au=document.getElementById('auth-screen');
+  var ap=document.getElementById('app-screen');
+  if(ld)ld.style.display='none';
+  if(au)au.style.display='none';
+  if(ap)ap.style.display='block';
+  initApp();
+}
+function mostrarAuth(){
+  var ld=document.getElementById('loading');
+  var au=document.getElementById('auth-screen');
+  if(ld)ld.style.display='none';
+  if(au)au.style.display='flex';
+}
+// ===== SUPABASE CONFIG =====
+var SUPA_URL = 'https://kurkittgqlzruzzdkjdt.supabase.co';
+var SUPA_KEY = 'sb_publishable_5QcZS_b1fQWKf8SaKpXfjg_COQ_kzw4';
+
+function supaFetch(path, method, body, token) {
+  var headers = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)};
+  return fetch(SUPA_URL+path, {method:method||'GET', headers:headers, body:body?JSON.stringify(body):undefined});
+}
+
+function salvarD(){
+  localStorage.setItem('bs_d',JSON.stringify(D));
+  if(window._uid && window._uid.indexOf('local_')===-1) {
+    supaFetch('/rest/v1/users?id=eq.'+window._uid, 'PATCH', {dados:JSON.stringify(D)}, window._token).catch(function(){});
+  }
+}
+
+function swAuth(t){
+  document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.aform').forEach(function(f){f.classList.remove('active');});
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('form-'+t).classList.add('active');
+}
+
+function fazerRegisto(){
+  var n=document.getElementById('rg-n').value.trim();
+  var e=document.getElementById('rg-e').value.trim();
+  var p=document.getElementById('rg-p').value;
+  var t=document.getElementById('rg-t').value.trim();
+  if(!n||!e||!p){mostrarErr('Preenche todos os campos');return;}
+  if(p.length<6){mostrarErr('Password minimo 6 caracteres');return;}
+  var btn=document.getElementById('btn-rg');btn.disabled=true;btn.textContent='A criar...';
+  // Registar no Supabase Auth
+  supaFetch('/auth/v1/signup','POST',{email:e,password:p,data:{nome:n,tel:t}})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){mostrarErr(res.error.message||'Erro ao criar conta.');btn.disabled=false;btn.textContent='Comecar os 7 Dias Gratis';return;}
+      var uid=res.user?res.user.id:'local_'+Date.now();
+      var token=res.access_token||'';
+      window._uid=uid;window._uname=n;window._token=token;
+      var novoD={nome:n,email:e,tel:t,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+      D=novoD;
+      localStorage.setItem('bs_d',JSON.stringify(novoD));
+      localStorage.setItem('bs_sess',JSON.stringify({uid:uid,nome:n,token:token}));
+      // Guardar perfil na base de dados
+      supaFetch('/rest/v1/users','POST',{id:uid,nome:n,email:e,tel:t,plano:'trial',trial_inicio:new Date().toISOString(),dados:JSON.stringify(novoD)},token).catch(function(){});
+      mostrarApp();
+    })
+    .catch(function(){
+      // Fallback local se Supabase falhar
+      var uid='local_'+Date.now();
+      window._uid=uid;window._uname=n;
+      var novoD={nome:n,email:e,tel:t,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+      D=novoD;
+      localStorage.setItem('bs_d',JSON.stringify(novoD));
+      localStorage.setItem('bs_sess',JSON.stringify({uid:uid,nome:n}));
+      mostrarApp();
+    });
+}
+
+function fazerLogin(){
+  var e=document.getElementById('li-e').value.trim();
+  var p=document.getElementById('li-p').value;
+  if(!e||!p){mostrarErr('Preenche email e password');return;}
+  var btn=document.getElementById('btn-li');btn.disabled=true;btn.textContent='A entrar...';
+  // Login no Supabase Auth
+  supaFetch('/auth/v1/token?grant_type=password','POST',{email:e,password:p})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){mostrarErr('Email ou password incorrectos.');btn.disabled=false;btn.textContent='Entrar';return;}
+      var uid=res.user?res.user.id:'';
+      var token=res.access_token||'';
+      var nome=res.user&&res.user.user_metadata?res.user.user_metadata.nome||e.split('@')[0]:e.split('@')[0];
+      window._uid=uid;window._uname=nome;window._token=token;
+      localStorage.setItem('bs_sess',JSON.stringify({uid:uid,nome:nome,token:token}));
+      // Carregar dados da nuvem
+      supaFetch('/rest/v1/users?id=eq.'+uid,'GET',null,token)
+        .then(function(r){return r.json();})
+        .then(function(rows){
+          if(rows&&rows.length&&rows[0].dados){
+            D=JSON.parse(rows[0].dados);
+          } else {
+            D=JSON.parse(localStorage.getItem('bs_d')||'{}');
+            if(!D.nome)D={nome:nome,email:e,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+          }
+          localStorage.setItem('bs_d',JSON.stringify(D));
+          mostrarApp();
+        })
+        .catch(function(){
+          D=JSON.parse(localStorage.getItem('bs_d')||'{}');
+          if(!D.nome)D={nome:nome,email:e,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+          mostrarApp();
+        });
+    })
+    .catch(function(){
+      mostrarErr('Erro de ligacao. Verifica a internet.');
+      btn.disabled=false;btn.textContent='Entrar';
+    });
+}
+
+function fazerLogout(){
+  if(window._token){supaFetch('/auth/v1/logout','POST',null,window._token).catch(function(){});}
+  D={};BA=null;clearInterval(INT_AL);window._token=null;
+  localStorage.removeItem('bs_sess');mostrarAuth();
+}
+function mostrarErr(m){
+  var e=document.getElementById('aerr');
+  e.textContent=m;e.style.display='block';
+  setTimeout(function(){e.style.display='none';},4000);
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('open');
+}
+function calcAge(dn){
+  if(!dn)return{m:0,txt:'Recem-nascido'};
+  var n=new Date(dn),h=new Date();
+  var m=(h.getFullYear()-n.getFullYear())*12+(h.getMonth()-n.getMonth());
+  if(m<0)m=0;var a=Math.floor(m/12),rm=m%12;
+  return{m:m,txt:a>0?(a+'a'+(rm?' '+rm+'m':'')):(m+'m')};
+}
+function checkTrial(){
+  var pl=D.plano||'trial';
+  var inicio=new Date(D.trialInicio||new Date());
+  var dias=Math.floor((new Date()-inicio)/(1000*60*60*24));
+  var restam=Math.max(0,7-dias);
+  var hdr=document.getElementById('trial-hdr');
+  var warn=document.getElementById('trial-warn-box');
+  if(hdr){
+    if(restam>0){hdr.textContent=restam+' dias gratis';}
+    else{hdr.textContent='Trial expirado';hdr.style.background='rgba(196,32,32,0.4)';}
+    if(restam<=3&&warn)warn.style.display='block';
+  }
+}
+function initApp(){
+  var nome=window._uname||D.nome||'Mae';
+  var hdrSub=document.getElementById('hdr-sub');
+  var userAv=document.getElementById('user-av');
+  var sbNome=document.getElementById('sb-nome');
+  if(hdrSub)hdrSub.textContent='Ola, '+nome.split(' ')[0]+'!';
+  if(userAv)userAv.textContent=(nome[0]||'M').toUpperCase();
+  if(sbNome)sbNome.textContent='Ola, '+nome.split(' ')[0]+'!';
+  checkTrial();
+  renderPeds();
+  renderRecs();
+  carregarBebes();
+  iniciarAlarmes();
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
+function carregarBebes(){
+  var sb=document.getElementById('sb-bebes');
+  if(!sb)return;
+  sb.innerHTML='';
+  if(D.bebes&&D.bebes.length){
+    D.bebes.forEach(function(b){
+      var chip=document.createElement('div');
+      chip.className='bchip'+(BA===b.id?' active':'');
+      chip.innerHTML=(b.sexo==='f'?'👧':'👦')+' '+b.nome;
+      chip.onclick=function(){selBebe(b.id);};
+      sb.appendChild(chip);
+    });
+  }
+  if(!BA&&D.bebes&&D.bebes.length)selBebe(D.bebes[0].id);
+}
+function addBebe(){
+  var n=document.getElementById('bn').value.trim();
+  var dn=document.getElementById('bdn').value;
+  var s=document.getElementById('bsx').value;
+  if(!n||!dn){mostrarToast('Preenche o nome e data');return;}
+  if(!D.bebes)D.bebes=[];
+  if(D.bebes.length>=3){mostrarToast('Maximo 3 bebes');return;}
+  var id='b'+Date.now();
+  D.bebes.push({id:id,nome:n,dn:dn,sexo:s});
+  if(!D.dados)D.dados={};
+  D.dados[id]={gestacao:{},perinatal:{},crescimento:[],medicamentos:[],vacinas:{},consultas:[]};
+  salvarD();
+  fecharModal('modal-bebe');
+  document.getElementById('bn').value='';
+  document.getElementById('bdn').value='';
+  carregarBebes();
+  selBebe(id);
+  mostrarToast('Adicionado!');
+}
+function selBebe(id){
+  BA=id;carregarBebes();
+  var b=null;
+  for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===id){b=D.bebes[i];break;}}
+  if(!b)return;
+  var age=calcAge(b.dn);
+  var crescList=D.dados&&D.dados[id]&&D.dados[id].crescimento?D.dados[id].crescimento:[];
+  var uc=crescList.length?crescList[crescList.length-1]:null;
+  var cardBem=document.getElementById('card-bem');
+  var resumo=document.getElementById('resumo');
+  var aguaBox=document.getElementById('agua-box');
+  var statsEl=document.getElementById('stats');
+  if(cardBem)cardBem.style.display='none';
+  if(resumo)resumo.style.display='block';
+  if(aguaBox)aguaBox.style.display=age.m>=6?'block':'none';
+  if(statsEl){
+    statsEl.innerHTML=
+      '<div class="stat-box"><div class="stat-val">'+b.nome.split(' ')[0]+'</div><div class="stat-lbl">'+(b.sexo==='f'?'Menina':'Menino')+'</div></div>'+
+      '<div class="stat-box"><div class="stat-val">'+age.m+'</div><div class="stat-lbl">Meses</div><div class="stat-sub">'+age.txt+'</div></div>'+
+      (uc?'<div class="stat-box"><div class="stat-val">'+uc.p+'kg</div><div class="stat-lbl">Ultimo peso</div></div>':'')+
+      (uc&&uc.a?'<div class="stat-box"><div class="stat-val">'+uc.a+'cm</div><div class="stat-lbl">Ultima altura</div></div>':'');
+  }
+  carregarForms(id);
+  renderVacs(id);
+  renderVacsIni(id);
+  renderMeds(id);
+  renderCons(id);
+  renderGuia(id);
+  renderAlarmes();
+  desenharCurva();
+}
+function carregarForms(id){
+  var d=D.dados&&D.dados[id]?D.dados[id]:{};
+  var g=d.gestacao||{};
+  var gSem=document.getElementById('g-sem');
+  var gCon=document.getElementById('g-con');
+  var gObs=document.getElementById('g-obs');
+  if(gSem&&g.sem)gSem.value=g.sem;
+  if(gCon&&g.con)gCon.value=g.con;
+  if(g.tipo){var el=document.querySelector('input[name="gt"][value="'+g.tipo+'"]');if(el)el.checked=true;}
+  if(gObs&&g.obs)gObs.value=g.obs;
+  var p=d.perinatal||{};
+  var fields=['dn','hora','p','c','cr','ig','f','obs'];
+  var ids=['p-dn','p-hora','p-p','p-c','p-cr','p-ig','p-f','p-obs'];
+  for(var i=0;i<fields.length;i++){
+    var el=document.getElementById(ids[i]);
+    if(el&&p[fields[i]])el.value=p[fields[i]];
+  }
+  var pLoc=document.getElementById('p-loc');
+  if(pLoc&&p.loc)pLoc.value=p.loc;
+  if(p.tp){var el2=document.querySelector('input[name="pp"][value="'+p.tp+'"]');if(el2)el2.checked=true;}
+  if(p.al){
+    var el3=document.querySelector('input[name="pal"][value="'+p.al+'"]');
+    if(el3){el3.checked=true;var fb=document.getElementById('formula-box');if(fb)fb.style.display=p.al!=='peito'?'block':'none';}
+  }
+}
+function chkFormula(){
+  var sel=document.querySelector('input[name="pal"]:checked');
+  var v=sel?sel.value:'';
+  var fb=document.getElementById('formula-box');
+  if(fb)fb.style.display=v&&v!=='peito'?'block':'none';
+}
+function salvarGestacao(){
+  if(!BA){mostrarToast('Selecciona um bebe');return;}
+  var t=document.querySelector('input[name="gt"]:checked');
+  if(!D.dados[BA])D.dados[BA]={};
+  D.dados[BA].gestacao={
+    sem:document.getElementById('g-sem').value,
+    con:document.getElementById('g-con').value,
+    tipo:t?t.value:'',
+    obs:document.getElementById('g-obs').value
+  };
+  salvarD();mostrarToast('Gestacao guardada!');
+}
+function salvarPerinatal(){
+  if(!BA){mostrarToast('Selecciona um bebe');return;}
+  var tp=document.querySelector('input[name="pp"]:checked');
+  var al=document.querySelector('input[name="pal"]:checked');
+  if(!D.dados[BA])D.dados[BA]={};
+  D.dados[BA].perinatal={
+    dn:document.getElementById('p-dn').value,
+    hora:document.getElementById('p-hora').value,
+    p:document.getElementById('p-p').value,
+    c:document.getElementById('p-c').value,
+    cr:document.getElementById('p-cr').value,
+    ig:document.getElementById('p-ig').value,
+    loc:document.getElementById('p-loc').value,
+    tp:tp?tp.value:'',
+    al:al?al.value:'',
+    f:document.getElementById('p-f').value,
+    obs:document.getElementById('p-obs').value
+  };
+  var dn=document.getElementById('p-dn').value;
+  if(dn){for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===BA){D.bebes[i].dn=dn;break;}}}
+  salvarD();selBebe(BA);mostrarToast('Dados perinatais guardados!');
+}
+var OF=[[2.3,3.2,4.2],[2.9,4.2,5.5],[3.4,5.1,6.6],[4.0,5.8,7.5],[4.4,6.4,8.2],[4.8,6.9,8.8],[5.1,7.3,9.3],[5.3,7.6,9.7],[5.6,7.9,10.1],[5.8,8.2,10.4],[5.9,8.5,10.8],[6.1,8.7,11.0],[6.3,8.9,11.3],[6.4,9.2,11.5]];
+var OM=[[2.5,3.3,4.4],[3.2,4.5,5.8],[3.8,5.6,7.1],[4.4,6.4,8.0],[4.9,7.0,8.7],[5.3,7.5,9.3],[5.7,7.9,9.8],[5.9,8.3,10.2],[6.2,8.6,10.5],[6.4,8.9,10.9],[6.6,9.2,11.2],[6.8,9.4,11.5],[6.9,9.6,11.8],[7.1,9.9,12.1]];
+function avalCresc(){
+  if(!BA){mostrarToast('Selecciona um bebe');return;}
+  var b=null;for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===BA){b=D.bebes[i];break;}}
+  var age=calcAge(b.dn);
+  var p=parseFloat(document.getElementById('c-p').value);
+  var a=parseFloat(document.getElementById('c-a').value);
+  var res=document.getElementById('res-cresc');
+  if(isNaN(p)){res.className='resultado vermelho';res.style.display='block';res.textContent='Insere pelo menos o peso.';return;}
+  var tab=b.sexo==='f'?OF:OM;
+  var idx=Math.min(age.m,tab.length-1);
+  var mn=tab[idx][0],id2=tab[idx][1],mx=tab[idx][2];
+  var msgs=[],niv='verde';
+  if(p<mn){msgs.push('Peso ('+p+'kg) abaixo do esperado (min. '+mn+'kg). Consulta o pediatra.');niv='vermelho';}
+  else if(p>mx){msgs.push('Peso ('+p+'kg) acima do esperado (max. '+mx+'kg).');niv='amarelo';}
+  else msgs.push('Peso ('+p+'kg) normal! Ideal: '+id2+'kg.');
+  if(!isNaN(a)){var ar=50+age.m*1.8;if(a<ar-8){msgs.push('Altura ('+a+'cm) pode estar baixa.');if(niv==='verde')niv='amarelo';}else msgs.push('Altura ('+a+'cm) adequada.');}
+  res.className='resultado '+niv;res.style.display='block';
+  res.innerHTML='<strong>'+b.nome+' - '+age.txt+'</strong><br><br>'+msgs.join('<br><br>');
+  if(!D.dados[BA].crescimento)D.dados[BA].crescimento=[];
+  D.dados[BA].crescimento.push({p:p,a:isNaN(a)?null:a,m:age.m,dt:new Date().toLocaleDateString('pt-MZ')});
+  salvarD();desenharCurva();
+}
+function desenharCurva(){
+  if(!BA)return;
+  var b=null;for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===BA){b=D.bebes[i];break;}}
+  if(!b)return;
+  var tab=b.sexo==='f'?OF:OM;
+  var crescList=D.dados&&D.dados[BA]&&D.dados[BA].crescimento?D.dados[BA].crescimento:[];
+  var cv=document.getElementById('cv');if(!cv)return;
+  var ctx=cv.getContext('2d');
+  var W=cv.width,H=cv.height,pL=38,pR=14,pT=14,pB=28,gW=W-pL-pR,gH=H-pT-pB,n=tab.length;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#f9fafb';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){var y=pT+i*(gH/4);ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(W-pR,y);ctx.stroke();}
+  var xP=function(m){return pL+(m/(n-1))*gW;};
+  var yP=function(kg){return pT+gH-(kg/15)*gH;};
+  ctx.beginPath();
+  for(var i=0;i<tab.length;i++){if(i===0)ctx.moveTo(xP(i),yP(tab[i][2]));else ctx.lineTo(xP(i),yP(tab[i][2]));}
+  for(var i=tab.length-1;i>=0;i--){ctx.lineTo(xP(i),yP(tab[i][0]));}
+  ctx.closePath();ctx.fillStyle='rgba(16,119,60,0.12)';ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='#10773c';ctx.lineWidth=2;
+  for(var i=0;i<tab.length;i++){if(i===0)ctx.moveTo(xP(i),yP(tab[i][1]));else ctx.lineTo(xP(i),yP(tab[i][1]));}
+  ctx.stroke();
+  if(crescList.length){
+    ctx.strokeStyle='#e8920a';ctx.lineWidth=2;ctx.beginPath();
+    for(var i=0;i<crescList.length;i++){var px=xP(Math.min(crescList[i].m,n-1));var py=yP(crescList[i].p);if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+    ctx.stroke();
+    for(var i=0;i<crescList.length;i++){ctx.beginPath();ctx.arc(xP(Math.min(crescList[i].m,n-1)),yP(crescList[i].p),5,0,2*Math.PI);ctx.fillStyle='#e8920a';ctx.fill();}
+  }
+  ctx.strokeStyle='#9ca3af';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pL,pT);ctx.lineTo(pL,H-pB);ctx.lineTo(W-pR,H-pB);ctx.stroke();
+  ctx.fillStyle='#6b7280';ctx.font='10px sans-serif';ctx.textAlign='center';
+  var ms=[0,3,6,9,12];for(var i=0;i<ms.length;i++){if(ms[i]<n)ctx.fillText(ms[i]+'m',xP(ms[i]),H-pB+12);}
+  ctx.textAlign='right';var kgs=[3,6,9,12,15];for(var i=0;i<kgs.length;i++)ctx.fillText(kgs[i]+'kg',pL-4,yP(kgs[i])+3);
+}
+var VACS=[
+  {id:'bcg',n:'BCG',d:'Tuberculose',ia:0,txt:'Ao nascer'},
+  {id:'hepb0',n:'Hepatite B (0)',d:'Hepatite B',ia:0,txt:'Ao nascer'},
+  {id:'vpo0',n:'VPO 0',d:'Poliomielite',ia:0,txt:'Ao nascer'},
+  {id:'penta1',n:'Pentavalente 1',d:'DTP+HepB+Hib',ia:1.5,txt:'6 semanas'},
+  {id:'vpo1',n:'VPO 1',d:'Poliomielite oral',ia:1.5,txt:'6 semanas'},
+  {id:'pcv1',n:'PCV10 (1)',d:'Pneumococo',ia:1.5,txt:'6 semanas'},
+  {id:'rota1',n:'Rotavirus 1',d:'Gastroenterite',ia:1.5,txt:'6 semanas'},
+  {id:'penta2',n:'Pentavalente 2',d:'DTP+HepB+Hib',ia:2.5,txt:'10 semanas'},
+  {id:'vpo2',n:'VPO 2',d:'Poliomielite oral',ia:2.5,txt:'10 semanas'},
+  {id:'pcv2',n:'PCV10 (2)',d:'Pneumococo',ia:2.5,txt:'10 semanas'},
+  {id:'rota2',n:'Rotavirus 2',d:'Gastroenterite',ia:2.5,txt:'10 semanas'},
+  {id:'penta3',n:'Pentavalente 3',d:'DTP+HepB+Hib',ia:3.5,txt:'14 semanas'},
+  {id:'vpo3',n:'VPO 3',d:'Poliomielite oral',ia:3.5,txt:'14 semanas'},
+  {id:'pcv3',n:'PCV10 (3)',d:'Pneumococo',ia:3.5,txt:'14 semanas'},
+  {id:'ipv',n:'IPV',d:'Poliomielite inject.',ia:3.5,txt:'14 semanas'},
+  {id:'vita6',n:'Vitamina A (1)',d:'Deficiencia Vit.A',ia:6,txt:'6 meses'},
+  {id:'sara1',n:'Sarampo 1',d:'Sarampo',ia:9,txt:'9 meses'},
+  {id:'fy',n:'Febre Amarela',d:'Zonas endemicas',ia:9,txt:'9 meses'},
+  {id:'vita12',n:'Vitamina A (2)',d:'Deficiencia Vit.A',ia:12,txt:'12 meses'},
+  {id:'sara2',n:'Sarampo 2+Rubeola',d:'SRC',ia:15,txt:'15 meses'},
+  {id:'dtp_ref',n:'DTP Reforco',d:'Difteria,Tetano,Tosse',ia:18,txt:'18 meses'}
+];
+function renderVacs(bid){
+  var b=null;for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===bid){b=D.bebes[i];break;}}
+  if(!b)return;
+  var age=calcAge(b.dn);
+  var f=D.dados&&D.dados[bid]&&D.dados[bid].vacinas?D.dados[bid].vacinas:{};
+  var el=document.getElementById('lista-v');if(!el)return;
+  var html='';
+  for(var i=0;i<VACS.length;i++){
+    var v=VACS[i];
+    var done=f[v.id]?true:false;
+    var late=!done&&age.m>v.ia+1;
+    var est=done?'feita':late?'atrasada':'pendente';
+    var ico=done?'checkmark-circle':'time';
+    var cor=done?'#e8f5ee':late?'#fdecea':'#fff8e1';
+    var tcor=done?'var(--g1)':late?'var(--vm)':'#7a5500';
+    html+='<div class="vi '+est+'" onclick="togVac(\''+bid+'\',\''+v.id+'\','+done+')">';
+    html+='<div style="font-size:1.1rem;flex-shrink:0">'+(done?'✅':late?'⚠️':'⏳')+'</div>';
+    html+='<div class="vi-info" style="flex:1"><h4>'+v.n+'</h4>';
+    html+='<p>'+v.d+' · '+v.txt+(done?' · '+f[v.id]:'')+'</p></div>';
+    html+='<span class="vbadge" style="background:'+cor+';color:'+tcor+'">'+(done?'Feita':late?'Atrasada':'Pendente')+'</span>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+function togVac(bid,vid,done){
+  if(!D.dados[bid].vacinas)D.dados[bid].vacinas={};
+  if(done)delete D.dados[bid].vacinas[vid];
+  else D.dados[bid].vacinas[vid]=new Date().toLocaleDateString('pt-MZ');
+  salvarD();renderVacs(bid);renderVacsIni(bid);
+  mostrarToast(done?'Desmarcada':'Vacina registada!');
+}
+function renderVacsIni(bid){
+  var b=null;for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===bid){b=D.bebes[i];break;}}
+  if(!b)return;
+  var age=calcAge(b.dn);
+  var f=D.dados&&D.dados[bid]&&D.dados[bid].vacinas?D.dados[bid].vacinas:{};
+  var el=document.getElementById('vac-ini');if(!el)return;
+  var prox=[];
+  for(var i=0;i<VACS.length;i++){if(!f[VACS[i].id]&&VACS[i].ia<=age.m+2)prox.push(VACS[i]);}
+  prox=prox.slice(0,3);
+  if(!prox.length){el.innerHTML='<div class="empty"><span class="ico">Vacinas em dia!</span></div>';return;}
+  var html='';
+  for(var i=0;i<prox.length;i++){
+    var late=age.m>prox[i].ia+1;
+    html+='<div class="vi '+(late?'atrasada':'pendente')+'" style="margin-bottom:6px">';
+    html+='<div style="font-size:1rem">'+(late?'⚠️':'⏳')+'</div>';
+    html+='<div class="vi-info"><h4>'+prox[i].n+'</h4><p>'+prox[i].txt+'</p></div></div>';
+  }
+  el.innerHTML=html;
+}
+function salvarCons(){
+  if(!BA){mostrarToast('Selecciona um bebe');return;}
+  var dt=document.getElementById('co-d').value;if(!dt){mostrarToast('Insere a data');return;}
+  if(!D.dados[BA].consultas)D.dados[BA].consultas=[];
+  D.dados[BA].consultas.unshift({
+    id:'c'+Date.now(),dt:dt,
+    med:document.getElementById('co-m').value,
+    p:document.getElementById('co-p').value,
+    a:document.getElementById('co-a').value,
+    t:document.getElementById('co-t').value,
+    obs:document.getElementById('co-obs').value,
+    rec:document.getElementById('co-rec').value
+  });
+  salvarD();
+  var ids=['co-d','co-m','co-p','co-a','co-t','co-obs','co-rec'];
+  for(var i=0;i<ids.length;i++)document.getElementById(ids[i]).value='';
+  renderCons(BA);mostrarToast('Consulta guardada!');
+}
+function renderCons(bid){
+  var cons=D.dados&&D.dados[bid]&&D.dados[bid].consultas?D.dados[bid].consultas:[];
+  var el=document.getElementById('lista-cons');if(!el)return;
+  if(!cons.length){el.innerHTML='<div class="empty"><span class="ico">🩺</span><p>Sem consultas</p></div>';return;}
+  var html='';
+  for(var i=0;i<cons.length;i++){
+    var c=cons[i];
+    html+='<div class="cons-item">';
+    html+='<h4 style="font-size:0.86rem;font-weight:800;color:var(--g1)">🩺 '+(c.med||'Consulta')+'</h4>';
+    html+='<p style="font-size:0.76rem;color:var(--cinza);margin-top:2px">'+(c.p?'⚖️ '+c.p+'kg ':'')+''+(c.a?'📏 '+c.a+'cm ':'')+''+(c.t?'🌡️ '+c.t+'C ':'')+'</p>';
+    if(c.obs)html+='<p style="font-size:0.78rem;margin-top:3px;line-height:1.4">'+c.obs+'</p>';
+    if(c.rec)html+='<p style="font-size:0.78rem;color:var(--g1);font-weight:700;margin-top:3px">💊 '+c.rec+'</p>';
+    html+='<p style="font-size:0.68rem;color:var(--cinza2);margin-top:4px">📅 '+c.dt+'</p>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+function renderGuia(bid){
+  var b=null;for(var i=0;i<D.bebes.length;i++){if(D.bebes[i].id===bid){b=D.bebes[i];break;}}
+  if(!b)return;
+  var m=calcAge(b.dn).m;
+  var el=document.getElementById('guia-alim');if(!el)return;
+  var g='';
+  if(m<6)g='<div class="resultado verde" style="display:block">🤱 <strong>Ate 6 meses</strong><br>Leite materno ou formula exclusivo. Sem agua, sumos ou papas.</div>';
+  else if(m<8)g='<div class="resultado amarelo" style="display:block">🥣 <strong>6-8 meses</strong><br>Papas de fruta (banana, papaia), purees de legumes. Começa a dar agua.</div>';
+  else if(m<12)g='<div class="resultado verde" style="display:block">🍚 <strong>8-12 meses</strong><br>Xima suave, legumes esmagados, frango, peixe. Agua entre refeicoes.</div>';
+  else g='<div class="resultado verde" style="display:block">🍽️ <strong>12+ meses</strong><br>Mesa da familia! Xima, feijao, legumes, carne, peixe. Sem sal excessivo.</div>';
+  el.innerHTML=g;
+}
+var RECS=[
+  {m:6,n:'Papa de Banana e Papaia',co:'#e8f5ee',cf:'#1a5c34',e:'🍌',d:'Rica em potassio e vitaminas.',
+   i:['1 banana madura','2 colheres de papaia','Leite materno q.b.'],
+   p:'Esmaga e mistura com leite para tornar cremosa.'},
+  {m:6,n:'Pure de Batata-doce',co:'#fff3e0',cf:'#7a5500',e:'🍠',d:'Vitamina A e energia.',
+   i:['1 batata-doce pequena','Agua q.b.'],
+   p:'Coze e esmassa ate ficar sem grumos.'},
+  {m:8,n:'Papa de Xima com Cenoura',co:'#e3f0fb',cf:'#1a4a7a',e:'🌽',d:'Receita mocambicana adaptada.',
+   i:['2 colheres de fuba','1 cenoura','200ml agua'],
+   p:'Coze a cenoura. Prepara a xima suave. Mistura.'},
+  {m:8,n:'Pure de Frango',co:'#fce4ec',cf:'#7a0050',e:'🍗',d:'Proteina essencial. Sem sal!',
+   i:['50g frango cozido','1 batata','Abobora'],
+   p:'Cozinha tudo. Esmassa ate ficar suave. Sem sal.'},
+  {m:12,n:'Feijao com Arroz',co:'#e8f5ee',cf:'#1a5c34',e:'🫘',d:'Proteina e hidratos tradicionais.',
+   i:['Feijao cozido','Arroz cozido','1 gota azeite'],
+   p:'Esmassa levemente. Pode ter textura.'}
+];
+function renderRecs(){
+  var el=document.getElementById('lista-rec');if(!el)return;
+  var html='';
+  for(var i=0;i<RECS.length;i++){
+    var r=RECS[i];
+    html+='<div class="receita-card">';
+    html+='<div class="rec-hdr" style="background:'+r.co+';color:'+r.cf+'">'+r.e+' '+r.n+' <span class="tag" style="background:'+r.co+';color:'+r.cf+';border:1.5px solid '+r.cf+'40;margin-left:auto">+'+r.m+'m</span></div>';
+    html+='<div class="rec-body"><p style="font-size:0.8rem;font-style:italic;color:var(--cinza)">'+r.d+'</p>';
+    html+='<p style="font-size:0.74rem;font-weight:800;color:var(--g1);margin:7px 0 3px">INGREDIENTES:</p><ul style="list-style:none">';
+    for(var j=0;j<r.i.length;j++)html+='<li style="font-size:0.76rem;color:var(--cinza);padding:1px 0 1px 12px;position:relative"><span style="position:absolute;left:0;color:var(--g4)">•</span>'+r.i[j]+'</li>';
+    html+='</ul><p style="font-size:0.76rem;margin-top:7px"><strong>Como fazer:</strong> '+r.p+'</p>';
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+}
+function addMed(){
+  if(!BA){mostrarToast('Selecciona um bebe');return;}
+  var n=document.getElementById('m-n').value.trim();
+  var hs=document.getElementById('m-h').value.trim();
+  if(!n||!hs){mostrarToast('Preenche o nome e horarios');return;}
+  var horas=hs.split(',').map(function(h){return h.trim();}).filter(function(h){return h;});
+  if(!D.dados[BA].medicamentos)D.dados[BA].medicamentos=[];
+  D.dados[BA].medicamentos.push({
+    id:'m'+Date.now(),
+    nome:n,
+    dose:document.getElementById('m-d').value,
+    dias:document.getElementById('m-di').value,
+    horas:horas,
+    obs:document.getElementById('m-o').value,
+    activo:true,
+    dt:new Date().toLocaleDateString('pt-MZ')
+  });
+  salvarD();
+  var ids=['m-n','m-d','m-di','m-h','m-o'];
+  for(var i=0;i<ids.length;i++)document.getElementById(ids[i]).value='';
+  renderMeds(BA);renderAlarmes();mostrarToast('Medicamento adicionado!');
+}
+function renderMeds(bid){
+  var meds=[];
+  if(D.dados&&D.dados[bid]&&D.dados[bid].medicamentos){
+    for(var i=0;i<D.dados[bid].medicamentos.length;i++){if(D.dados[bid].medicamentos[i].activo)meds.push(D.dados[bid].medicamentos[i]);}
+  }
+  var el=document.getElementById('lista-m');if(!el)return;
+  if(!meds.length){el.innerHTML='<div class="empty"><span class="ico">💊</span><p>Sem medicamentos</p></div>';return;}
+  var html='';
+  for(var i=0;i<meds.length;i++){
+    var m=meds[i];
+    html+='<div class="med-card">';
+    html+='<button class="del-btn" onclick="delMed(\''+bid+'\',\''+m.id+'\')">✕</button>';
+    html+='<h4 style="font-size:0.86rem;font-weight:800;color:var(--g1)">💊 '+m.nome+'</h4>';
+    html+='<p style="font-size:0.76rem;color:var(--cinza)">'+(m.dose?'Dose: '+m.dose:'')+(m.dias?' · '+m.dias+' dias':'')+'</p>';
+    html+='<div class="med-horas">';
+    for(var j=0;j<m.horas.length;j++)html+='<span class="med-hora">🕐 '+m.horas[j]+'</span>';
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+}
+function delMed(bid,mid){
+  var meds=D.dados[bid].medicamentos;
+  D.dados[bid].medicamentos=meds.filter(function(m){return m.id!==mid;});
+  salvarD();renderMeds(bid);renderAlarmes();mostrarToast('Removido');
+}
+function renderAlarmes(){
+  if(!BA)return;
+  var meds=[];
+  if(D.dados&&D.dados[BA]&&D.dados[BA].medicamentos){
+    for(var i=0;i<D.dados[BA].medicamentos.length;i++){if(D.dados[BA].medicamentos[i].activo)meds.push(D.dados[BA].medicamentos[i]);}
+  }
+  var als=[];
+  for(var i=0;i<meds.length;i++){for(var j=0;j<meds[i].horas.length;j++)als.push({n:meds[i].nome,d:meds[i].dose,h:meds[i].horas[j]});}
+  als.sort(function(a,b){return a.h.localeCompare(b.h);});
+  var el=document.getElementById('lista-al');
+  if(el){
+    if(!als.length){el.innerHTML='<div class="empty"><span class="ico">🔕</span><p>Sem alarmes</p></div>';}
+    else{
+      var html='';
+      for(var i=0;i<als.length;i++){
+        html+='<div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--bege2);border-radius:10px;margin-bottom:6px">';
+        html+='<span style="font-size:1.1rem">💊</span>';
+        html+='<div style="flex:1"><div style="font-size:0.84rem;font-weight:700">'+als[i].n+'</div>';
+        html+='<div style="font-size:0.74rem;color:var(--cinza)">'+(als[i].d||'')+' · <strong>'+als[i].h+'</strong></div></div></div>';
+      }
+      el.innerHTML=html;
+    }
+  }
+  var eli=document.getElementById('al-ini');
+  if(eli){
+    if(!als.length){eli.innerHTML='<div class="empty"><span class="ico">😴</span><p>Sem alarmes</p></div>';}
+    else{
+      var html2='';
+      for(var i=0;i<Math.min(als.length,3);i++){
+        html2+='<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bege2);border-radius:10px;margin-bottom:5px">';
+        html2+='<span>💊</span><div><div style="font-size:0.8rem;font-weight:700">'+als[i].n+'</div>';
+        html2+='<div style="font-size:0.72rem;color:var(--cinza)">'+als[i].h+'</div></div></div>';
+      }
+      eli.innerHTML=html2;
+    }
+  }
+}
+function iniciarAlarmes(){
+  if(INT_AL)clearInterval(INT_AL);
+  INT_AL=setInterval(function(){
+    if(!BA)return;
+    var ag=new Date();
+    var ha=('0'+ag.getHours()).slice(-2)+':'+('0'+ag.getMinutes()).slice(-2);
+    var meds=[];
+    if(D.dados&&D.dados[BA]&&D.dados[BA].medicamentos){
+      for(var i=0;i<D.dados[BA].medicamentos.length;i++){if(D.dados[BA].medicamentos[i].activo)meds.push(D.dados[BA].medicamentos[i]);}
+    }
+    for(var i=0;i<meds.length;i++){
+      for(var j=0;j<meds[i].horas.length;j++){
+        if(meds[i].horas[j]===ha){
+          var k='al_'+meds[i].id+'_'+ha+'_'+ag.toDateString();
+          if(!sessionStorage.getItem(k)){
+            sessionStorage.setItem(k,'1');
+            var apt=document.getElementById('ap-t');
+            var apd=document.getElementById('ap-d');
+            var ap=document.getElementById('ap');
+            if(apt)apt.textContent='💊 '+meds[i].nome;
+            if(apd)apd.textContent=meds[i].dose||'Hora da toma';
+            if(ap){ap.classList.add('show');setTimeout(function(){ap.classList.remove('show');},10000);}
+            if('Notification' in window&&Notification.permission==='granted')
+              new Notification('Bebe Saudavel',{body:'💊 '+meds[i].nome+(meds[i].dose?' - '+meds[i].dose:'')});
+          }
+        }
+      }
+    }
+  },30000);
+}
+var TRI_PERGUNTAS=[
+  {id:'febre',q:'O bebe tem febre?',ic:'🌡️',ops:[
+    {v:'nao',l:'Nao tem febre',ic:'✅'},{v:'baixa',l:'Febre baixa (37.5-38.5C)',ic:'🟡'},
+    {v:'alta',l:'Febre alta (acima 38.5C)',ic:'🔴'},{v:'muito_alta',l:'Febre muito alta (acima 39C)',ic:'🚨'}
+  ]},
+  {id:'ranho',q:'O bebe tem ranho / corrimento nasal?',ic:'🤧',ops:[
+    {v:'nao',l:'Nao tem ranho',ic:'✅'},{v:'transparente',l:'Ranho transparente',ic:'🟡'},
+    {v:'verde',l:'Ranho verde',ic:'🟠'},{v:'acinzentado',l:'Ranho acinzentado',ic:'🔴'}
+  ]},
+  {id:'olhos',q:'O bebe tem muita ramela nos olhos?',ic:'👁️',ops:[
+    {v:'nao',l:'Nao tem ramela',ic:'✅'},{v:'pouca',l:'Pouca ramela',ic:'🟡'},
+    {v:'muita',l:'Muita ramela / olhos colados',ic:'🔴'}
+  ]},
+  {id:'vomito',q:'O bebe esta com vomitos?',ic:'🤢',ops:[
+    {v:'nao',l:'Nao vomita',ic:'✅'},{v:'uma_vez',l:'Vomitou uma vez',ic:'🟡'},
+    {v:'repetido',l:'Vomitos repetidos',ic:'🔴'},{v:'projetil',l:'Vomitos em jato',ic:'🚨'}
+  ]},
+  {id:'diarreia',q:'O bebe tem diarreia?',ic:'💧',ops:[
+    {v:'nao',l:'Nao tem diarreia',ic:'✅'},{v:'pouca',l:'1-2 fezes moles',ic:'🟡'},
+    {v:'muita',l:'Mais de 3 vezes',ic:'🔴'},{v:'sangue',l:'Com sangue nas fezes',ic:'🚨'}
+  ]},
+  {id:'rabo',q:'O rabinho esta assado?',ic:'🍑',ops:[
+    {v:'nao',l:'Nao esta assado',ic:'✅'},{v:'leve',l:'Levemente vermelho',ic:'🟡'},
+    {v:'grave',l:'Muito vermelho / com feridas',ic:'🔴'}
+  ]},
+  {id:'erupcao',q:'O bebe tem erupcao cutanea?',ic:'🔴',ops:[
+    {v:'nao',l:'Nao tem erupcao',ic:'✅'},{v:'leve',l:'Algumas manchinhas',ic:'🟡'},
+    {v:'generalizada',l:'Erupcao generalizada',ic:'🔴'},{v:'purpura',l:'Manchas roxas/escuras',ic:'🚨'}
+  ]}
+];
+var TRI_IDX=0,TRI_RESPS={};
+function showTri(){
+  TRI_IDX=0;TRI_RESPS={};
+  var ts=document.getElementById('triagem-screen');
+  if(ts)ts.style.display='flex';
+  renderPerg();
+}
+function renderPerg(){
+  var p=TRI_PERGUNTAS[TRI_IDX];
+  var pct=Math.round((TRI_IDX/TRI_PERGUNTAS.length)*100);
+  var bar=document.getElementById('tri-bar');if(bar)bar.style.width=pct+'%';
+  var body=document.getElementById('tri-body');if(!body)return;
+  var html='<div class="tri-pergunta">';
+  html+='<div style="font-size:3rem;margin-bottom:10px">'+p.ic+'</div>';
+  html+='<h3>'+p.q+'</h3><br>';
+  html+='<div class="tri-opcoes">';
+  for(var i=0;i<p.ops.length;i++){
+    var o=p.ops[i];
+    var sel=TRI_RESPS[p.id]===o.v?'sel':'';
+    html+='<button class="tri-opt '+sel+'" onclick="selOp(\''+p.id+'\',\''+o.v+'\',this)">';
+    html+='<span class="tri-opt-ico">'+o.ic+'</span>'+o.l+'</button>';
+  }
+  html+='</div></div>';
+  body.innerHTML=html;
+  var footer=document.getElementById('tri-footer');if(!footer)return;
+  var isLast=TRI_IDX===TRI_PERGUNTAS.length-1;
+  var fhtml='';
+  if(TRI_IDX>0)fhtml+='<button class="btn-voltar" onclick="triBack()" style="margin-bottom:8px">← Voltar</button>';
+  fhtml+='<button class="btn-tri" onclick="'+(isLast?'calcTri()':'triNext()')+'">'+(isLast?'Ver Resultado 🔍':'Proxima →')+'</button>';
+  fhtml+='<button style="width:100%;padding:9px;border:none;background:none;color:var(--cinza);font-size:0.82rem;cursor:pointer;margin-top:6px" onclick="fecharTri()">✕ Fechar</button>';
+  footer.innerHTML=fhtml;
+}
+function selOp(qid,val,btn){
+  TRI_RESPS[qid]=val;
+  var opts=document.querySelectorAll('.tri-opt');
+  for(var i=0;i<opts.length;i++)opts[i].classList.remove('sel');
+  btn.classList.add('sel');
+}
+function triNext(){
+  if(!TRI_RESPS[TRI_PERGUNTAS[TRI_IDX].id]){mostrarToast('Selecciona uma opcao');return;}
+  TRI_IDX++;renderPerg();
+}
+function triBack(){TRI_IDX--;renderPerg();}
+function fecharTri(){var ts=document.getElementById('triagem-screen');if(ts)ts.style.display='none';}
+function calcTri(){
+  if(!TRI_RESPS[TRI_PERGUNTAS[TRI_IDX].id]){mostrarToast('Selecciona uma opcao');return;}
+  var r=TRI_RESPS;var nivel='casa';var alertas=[];var conselhos=[];
+  if(r.febre==='muito_alta'){nivel='urgente';alertas.push('Febre muito alta (acima 39C) - risco de convulsoes');}
+  else if(r.febre==='alta'){if(nivel!=='urgente')nivel='atencao';alertas.push('Febre alta (acima 38.5C)');}
+  else if(r.febre==='baixa'){conselhos.push('Febre baixa - oferece liquidos e podes dar paracetamol pediatrico');}
+  if(r.ranho==='acinzentado'){if(nivel==='casa')nivel='atencao';alertas.push('Ranho acinzentado - possivel infeccao bacteriana');}
+  else if(r.ranho==='verde'){conselhos.push('Ranho verde - vigia 2-3 dias');}
+  if(r.olhos==='muita'){if(nivel==='casa')nivel='atencao';alertas.push('Muita ramela nos olhos - possivel conjuntivite');}
+  if(r.vomito==='projetil'){nivel='urgente';alertas.push('Vomitos em jato - sinal de alarme urgente');}
+  else if(r.vomito==='repetido'){if(nivel!=='urgente')nivel='atencao';alertas.push('Vomitos repetidos - risco de desidratacao');}
+  if(r.diarreia==='sangue'){nivel='urgente';alertas.push('Sangue nas fezes - urgencia medica');}
+  else if(r.diarreia==='muita'){if(nivel!=='urgente')nivel='atencao';alertas.push('Diarreia frequente - risco de desidratacao');}
+  if(r.rabo==='grave'){if(nivel==='casa')nivel='atencao';alertas.push('Rabinho com feridas - precisa tratamento');}
+  if(r.erupcao==='purpura'){nivel='urgente';alertas.push('Manchas roxas/escuras - URGENTE! Possivel meningite');}
+  else if(r.erupcao==='generalizada'){if(nivel!=='urgente')nivel='atencao';alertas.push('Erupcao cutanea generalizada');}
+  var body=document.getElementById('tri-body');
+  var footer=document.getElementById('tri-footer');
+  var bar=document.getElementById('tri-bar');if(bar)bar.style.width='100%';
+  var html='<div class="tri-resultado">';
+  if(nivel==='urgente'){
+    html+='<div class="res-card urgente">';
+    html+='<span class="res-ico">🚨</span>';
+    html+='<h3 style="color:var(--vm)">Leva ao Hospital AGORA</h3>';
+    html+='<p>O teu bebe tem sintomas que requerem atencao medica imediata.</p>';
+    html+='<div class="res-sintomas"><h4>Sinais de Alarme:</h4><ul>';
+    for(var i=0;i<alertas.length;i++)html+='<li>'+alertas[i]+'</li>';
+    html+='</ul></div>';
+    html+='<a href="tel:1499" class="btn-urgente">📞 Ligar ao MISAU - 1499 (Gratis)</a>';
+    html+='</div>';
+  } else if(nivel==='atencao'){
+    html+='<div class="res-card atencao">';
+    html+='<span class="res-ico">⚠️</span>';
+    html+='<h3 style="color:#7a5500">Consulta o Medico Hoje</h3>';
+    html+='<p>O teu bebe precisa de avaliacao medica hoje.</p>';
+    if(alertas.length){html+='<div class="res-sintomas"><h4>Sintomas:</h4><ul>';for(var i=0;i<alertas.length;i++)html+='<li>'+alertas[i]+'</li>';html+='</ul></div>';}
+    html+='</div>';
+  } else {
+    html+='<div class="res-card casa">';
+    html+='<span class="res-ico">🏠</span>';
+    html+='<h3 style="color:var(--g1)">Podes Ficar em Casa</h3>';
+    html+='<p>O teu bebe nao tem sinais de alarme graves.</p>';
+    html+='<div class="res-sintomas"><h4>Conselhos:</h4><ul>';
+    for(var i=0;i<conselhos.length;i++)html+='<li>'+conselhos[i]+'</li>';
+    html+='<li>Mantém o bebe hidratado</li><li>Vigia os sintomas nas proximas 24h</li>';
+    html+='</ul></div></div>';
+  }
+  html+='</div>';
+  if(body)body.innerHTML=html;
+  if(footer)footer.innerHTML='<button class="btn-voltar" onclick="fecharTri()" style="width:100%">✕ Fechar</button>';
+}
+function pedirLoc(){
+  var btn=document.getElementById('btn-loc');var st=document.getElementById('loc-st');
+  if(!navigator.geolocation){if(st)st.textContent='Geolocalizacao nao suportada.';return;}
+  if(btn){btn.textContent='A localizar...';btn.disabled=true;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude;var lng=pos.coords.longitude;
+    if(btn)btn.textContent='Localizacao obtida';
+    var url='https://www.google.com/maps/search/hospital+clinica+centro+saude/@'+lat+','+lng+',13z';
+    var el=document.getElementById('lista-uni');
+    if(!el)return;
+    el.innerHTML='<div style="background:var(--bege2);border-radius:11px;padding:13px;margin-bottom:10px;">'+
+      '<p style="font-size:0.84rem;font-weight:700;color:var(--g1)">📍 Localizacao obtida!</p>'+
+      '<a href="'+url+'" target="_blank" style="display:inline-block;margin-top:8px;padding:10px 15px;background:var(--g3);color:#fff;border-radius:10px;text-decoration:none;font-weight:800;font-size:0.82rem">🗺️ Ver no Google Maps</a>'+
+      '</div>'+
+      '<div style="border:2px solid var(--cinza3);border-radius:11px;padding:12px;display:flex;gap:9px;margin-bottom:8px;background:#fff">'+
+      '<span style="font-size:1.4rem">🏥</span><div><div style="font-weight:700;font-size:0.86rem">Hospital Central de Maputo</div>'+
+      '<a href="tel:+258213014300" style="font-size:0.76rem;color:var(--g3);font-weight:700">📞 +258 21 301 430</a></div></div>'+
+      '<div style="border:2px solid var(--cinza3);border-radius:11px;padding:12px;display:flex;gap:9px;background:#fff">'+
+      '<span style="font-size:1.4rem">📞</span><div><div style="font-weight:700;font-size:0.86rem">MISAU - Linha Verde</div>'+
+      '<a href="tel:1499" style="font-size:1.2rem;color:var(--vm);font-weight:800">📞 1499</a></div></div>';
+  },function(){
+    if(btn){btn.textContent='Encontrar Unidades Proximas';btn.disabled=false;}
+    if(st)st.textContent='Nao foi possivel obter localizacao.';
+  });
+}
+function renderPeds(){
+  var el=document.getElementById('lista-ped');if(!el)return;
+  var ps=[
+    {n:'Dra. Ana Paula Machava',e:'Pediatra Geral',l:'Hospital Central de Maputo',t:'+258 21 301 000'},
+    {n:'Dr. Carlos Nhampule',e:'Neonatologista',l:'Clinica Cruz Azul, Maputo',t:'+258 21 491 000'},
+    {n:'Dra. Lurdes Tembe',e:'Nutricao Infantil',l:'H. Geral Jose Macamo',t:'+258 21 460 000'},
+    {n:'Dr. Helio Mondlane',e:'Pediatra - Beira',l:'Hospital Central da Beira',t:'+258 23 320 000'},
+    {n:'Dra. Fatima Cossa',e:'Pediatra - Nampula',l:'Hospital Central de Nampula',t:'+258 26 212 000'}
+  ];
+  var cls=['#e8f5ee','#e3f0fb','#fff3e0','#fce4ec','#e8f5ee'];
+  var html='';
+  for(var i=0;i<ps.length;i++){
+    html+='<div style="border:2px solid var(--cinza3);border-radius:12px;padding:12px;margin-bottom:9px;display:flex;gap:10px;background:#fff">';
+    html+='<div style="width:42px;height:42px;border-radius:50%;background:'+cls[i%5]+';display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👨‍⚕️</div>';
+    html+='<div><div style="font-weight:800;font-size:0.88rem">'+ps[i].n+'</div>';
+    html+='<div style="font-size:0.74rem;color:var(--cinza);margin-top:1px">'+ps[i].e+'</div>';
+    html+='<div style="font-size:0.72rem;color:var(--g3);font-weight:700;margin-top:2px">📍 '+ps[i].l+'</div>';
+    html+='<a href="tel:'+ps[i].t+'" style="display:inline-block;margin-top:5px;padding:4px 10px;background:var(--g3);color:#fff;border-radius:7px;font-size:0.72rem;font-weight:800;text-decoration:none">📞 '+ps[i].t+'</a></div></div>';
+  }
+  el.innerHTML=html;
+}
+function showSec(id){
+  var secs=document.querySelectorAll('.section');
+  for(var i=0;i<secs.length;i++)secs[i].classList.remove('active');
+  var el=document.getElementById('sec-'+id);if(el)el.classList.add('active');
+  if(id==='crescimento')desenharCurva();
+  if(id==='vacinas'&&BA)renderVacs(BA);
+  if(id==='medicacao'&&BA){renderMeds(BA);renderAlarmes();}
+  if(id==='consultas'&&BA)renderCons(BA);
+  if(id==='alimentacao'&&BA){renderGuia(BA);renderRecs();}
+  if(id==='pagamento')checkTrial();
+}
+function abrirModal(id){var el=document.getElementById(id);if(el)el.classList.add('open');}
+function fecharModal(id){var el=document.getElementById(id);if(el)el.classList.remove('open');}
+function mostrarToast(msg){
+  var t=document.getElementById('toast');if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2600);
+}
+// Fechar modal ao clicar fora
+document.addEventListener('click',function(e){
+  var modals=document.querySelectorAll('.modal-overlay');
+  for(var i=0;i<modals.length;i++){if(e.target===modals[i])modals[i].classList.remove('open');}
+});
+// ARRANQUE - ultima linha do script
+(function(){
+  var sess=localStorage.getItem('bs_sess');
+  if(sess){
+    try{
+      var
