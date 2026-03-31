@@ -1146,9 +1146,23 @@ document.addEventListener('click',function(e){
   for(var i=0;i<modals.length;i++){if(e.target===modals[i])modals[i].classList.remove('open');}
 });
 // ARRANQUE - ultima linha do script
-(function(){
-  var sess=localStorage.getItem('bs_sess');
-  if(sess){
-    try{
-      var p=JSON.parse(sess);
-      window._u
+window.addEventListener('load', function() {
+  var sess = localStorage.getItem('bs_sess');
+  if (sess) {
+    try {
+      var p = JSON.parse(sess);
+      window._uid = p.uid;
+      window._uname = p.nome;
+      window._token = p.token || '';
+      window._D = JSON.parse(localStorage.getItem('bs_d') || '{}');
+      mostrarApp();
+    } catch(e) {
+      mostrarAuth();
+    }
+  } else {
+    mostrarAuth();
+  }
+});
+</script>
+</body>
+</html>
