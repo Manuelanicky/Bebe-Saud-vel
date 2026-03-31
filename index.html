@@ -308,7 +308,7 @@ canvas{max-width:100%;border-radius:9px;}
         <div style="background:var(--bege2);border-radius:11px;padding:13px;font-size:0.78rem;color:var(--cinza);line-height:1.6;margin-top:10px">
           <strong style="color:var(--g1)">Como pagar:</strong><br>
           1. Clica no botão acima<br>2. Escolhe M-Pesa ou e-Mola<br>3. Confirma no telemóvel<br>
-          4. Envia comprovativo para <strong>bebesaudavel.moz@gmail.com</strong><br>5. Conta activada em até 2h ✅
+          4. Envia comprovativo para <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="690b0c0b0c1a081c0d081f0c0547040613290e04080005470a0604">[email&#160;protected]</a></strong><br>5. Conta activada em até 2h ✅
         </div></div>
     </div>
   </main>
@@ -325,7 +325,7 @@ canvas{max-width:100%;border-radius:9px;}
   <div style="flex:1"><div style="font-size:0.9rem;font-weight:800" id="ap-t">Medicamento!</div><div style="font-size:0.76rem;opacity:0.85" id="ap-d">Hora da toma</div></div>
   <button style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 11px;border-radius:7px;cursor:pointer;font-size:0.76rem;" onclick="document.getElementById('ap').classList.remove('show')">OK ✓</button>
 </div>
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // Test the JS that will go in the app
 let BA=null, D={}, INT_AL=null;
 
@@ -349,15 +349,29 @@ function mostrarAuth(){
   if(ld)ld.style.display='none';
   if(au)au.style.display='flex';
 }
+// ===== SUPABASE CONFIG =====
+var SUPA_URL = 'https://kurkittgqlzruzzdkjdt.supabase.co';
+var SUPA_KEY = 'sb_publishable_5QcZS_b1fQWKf8SaKpXfjg_COQ_kzw4';
+
+function supaFetch(path, method, body, token) {
+  var headers = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)};
+  return fetch(SUPA_URL+path, {method:method||'GET', headers:headers, body:body?JSON.stringify(body):undefined});
+}
+
 function salvarD(){
   localStorage.setItem('bs_d',JSON.stringify(D));
+  if(window._uid && window._uid.indexOf('local_')===-1) {
+    supaFetch('/rest/v1/users?id=eq.'+window._uid, 'PATCH', {dados:JSON.stringify(D)}, window._token).catch(function(){});
+  }
 }
+
 function swAuth(t){
   document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.aform').forEach(function(f){f.classList.remove('active');});
   document.getElementById('tab-'+t).classList.add('active');
   document.getElementById('form-'+t).classList.add('active');
 }
+
 function fazerRegisto(){
   var n=document.getElementById('rg-n').value.trim();
   var e=document.getElementById('rg-e').value.trim();
@@ -366,25 +380,77 @@ function fazerRegisto(){
   if(!n||!e||!p){mostrarErr('Preenche todos os campos');return;}
   if(p.length<6){mostrarErr('Password minimo 6 caracteres');return;}
   var btn=document.getElementById('btn-rg');btn.disabled=true;btn.textContent='A criar...';
-  var novoD={nome:n,email:e,tel:t,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
-  window._uid='local_'+Date.now();window._uname=n;window._D=novoD;D=novoD;
-  localStorage.setItem('bs_d',JSON.stringify(novoD));
-  localStorage.setItem('bs_sess',JSON.stringify({uid:window._uid,nome:n}));
-  mostrarApp();
+  // Registar no Supabase Auth
+  supaFetch('/auth/v1/signup','POST',{email:e,password:p,data:{nome:n,tel:t}})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){mostrarErr(res.error.message||'Erro ao criar conta.');btn.disabled=false;btn.textContent='Comecar os 7 Dias Gratis';return;}
+      var uid=res.user?res.user.id:'local_'+Date.now();
+      var token=res.access_token||'';
+      window._uid=uid;window._uname=n;window._token=token;
+      var novoD={nome:n,email:e,tel:t,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+      D=novoD;
+      localStorage.setItem('bs_d',JSON.stringify(novoD));
+      localStorage.setItem('bs_sess',JSON.stringify({uid:uid,nome:n,token:token}));
+      // Guardar perfil na base de dados
+      supaFetch('/rest/v1/users','POST',{id:uid,nome:n,email:e,tel:t,plano:'trial',trial_inicio:new Date().toISOString(),dados:JSON.stringify(novoD)},token).catch(function(){});
+      mostrarApp();
+    })
+    .catch(function(){
+      // Fallback local se Supabase falhar
+      var uid='local_'+Date.now();
+      window._uid=uid;window._uname=n;
+      var novoD={nome:n,email:e,tel:t,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+      D=novoD;
+      localStorage.setItem('bs_d',JSON.stringify(novoD));
+      localStorage.setItem('bs_sess',JSON.stringify({uid:uid,nome:n}));
+      mostrarApp();
+    });
 }
+
 function fazerLogin(){
   var e=document.getElementById('li-e').value.trim();
   var p=document.getElementById('li-p').value;
   if(!e||!p){mostrarErr('Preenche email e password');return;}
   var btn=document.getElementById('btn-li');btn.disabled=true;btn.textContent='A entrar...';
-  D=JSON.parse(localStorage.getItem('bs_d')||'{}');
-  if(!D.nome)D={nome:e.split('@')[0],email:e,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
-  window._uid='local_demo';window._uname=D.nome;window._D=D;
-  localStorage.setItem('bs_sess',JSON.stringify({uid:'local_demo',nome:D.nome}));
-  mostrarApp();
+  // Login no Supabase Auth
+  supaFetch('/auth/v1/token?grant_type=password','POST',{email:e,password:p})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.error){mostrarErr('Email ou password incorrectos.');btn.disabled=false;btn.textContent='Entrar';return;}
+      var uid=res.user?res.user.id:'';
+      var token=res.access_token||'';
+      var nome=res.user&&res.user.user_metadata?res.user.user_metadata.nome||e.split('@')[0]:e.split('@')[0];
+      window._uid=uid;window._uname=nome;window._token=token;
+      localStorage.setItem('bs_sess',JSON.stringify({uid:uid,nome:nome,token:token}));
+      // Carregar dados da nuvem
+      supaFetch('/rest/v1/users?id=eq.'+uid,'GET',null,token)
+        .then(function(r){return r.json();})
+        .then(function(rows){
+          if(rows&&rows.length&&rows[0].dados){
+            D=JSON.parse(rows[0].dados);
+          } else {
+            D=JSON.parse(localStorage.getItem('bs_d')||'{}');
+            if(!D.nome)D={nome:nome,email:e,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+          }
+          localStorage.setItem('bs_d',JSON.stringify(D));
+          mostrarApp();
+        })
+        .catch(function(){
+          D=JSON.parse(localStorage.getItem('bs_d')||'{}');
+          if(!D.nome)D={nome:nome,email:e,plano:'trial',trialInicio:new Date().toISOString(),bebes:[],dados:{}};
+          mostrarApp();
+        });
+    })
+    .catch(function(){
+      mostrarErr('Erro de ligacao. Verifica a internet.');
+      btn.disabled=false;btn.textContent='Entrar';
+    });
 }
+
 function fazerLogout(){
-  D={};BA=null;clearInterval(INT_AL);
+  if(window._token){supaFetch('/auth/v1/logout','POST',null,window._token).catch(function(){});}
+  D={};BA=null;clearInterval(INT_AL);window._token=null;
   localStorage.removeItem('bs_sess');mostrarAuth();
 }
 function mostrarErr(m){
@@ -1082,13 +1148,4 @@ document.addEventListener('click',function(e){
   var sess=localStorage.getItem('bs_sess');
   if(sess){
     try{
-      var p=JSON.parse(sess);
-      window._uid=p.uid;window._uname=p.nome;
-      window._D=JSON.parse(localStorage.getItem('bs_d')||'{}');
-      mostrarApp();
-    }catch(e){mostrarAuth();}
-  }else{mostrarAuth();}
-})();
-</script>
-</body>
-</html>
+      var
