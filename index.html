@@ -308,7 +308,7 @@ canvas{max-width:100%;border-radius:9px;}
         <div style="background:var(--bege2);border-radius:11px;padding:13px;font-size:0.78rem;color:var(--cinza);line-height:1.6;margin-top:10px">
           <strong style="color:var(--g1)">Como pagar:</strong><br>
           1. Clica no botão acima<br>2. Escolhe M-Pesa ou e-Mola<br>3. Confirma no telemóvel<br>
-          4. Envia comprovativo para <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="690b0c0b0c1a081c0d081f0c0547040613290e04080005470a0604">[email&#160;protected]</a></strong><br>5. Conta activada em até 2h ✅
+          4. Envia comprovativo para <strong>bebesaudavel.moz@gmail.com</strong><br>5. Conta activada em até 2h ✅
         </div></div>
     </div>
   </main>
@@ -325,7 +325,7 @@ canvas{max-width:100%;border-radius:9px;}
   <div style="flex:1"><div style="font-size:0.9rem;font-weight:800" id="ap-t">Medicamento!</div><div style="font-size:0.76rem;opacity:0.85" id="ap-d">Hora da toma</div></div>
   <button style="background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 11px;border-radius:7px;cursor:pointer;font-size:0.76rem;" onclick="document.getElementById('ap').classList.remove('show')">OK ✓</button>
 </div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // Test the JS that will go in the app
 let BA=null, D={}, INT_AL=null;
 
@@ -1148,4 +1148,15 @@ document.addEventListener('click',function(e){
   var sess=localStorage.getItem('bs_sess');
   if(sess){
     try{
-      var
+      var p=JSON.parse(sess);
+      window._uid=p.uid;window._uname=p.nome;window._token=p.token||'';
+      window._D=JSON.parse(localStorage.getItem('bs_d')||'{}');
+      mostrarApp();
+    }catch(e){mostrarAuth();}
+  } else {
+    mostrarAuth();
+  }
+})();
+</script>
+</body>
+</html>
